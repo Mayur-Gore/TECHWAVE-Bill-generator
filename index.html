@@ -357,7 +357,7 @@
     }
 
     .contact .addr {
-      max-width: 70mm;
+      max-width: 95mm;
       margin-left: auto;
       white-space: pre-line
     }
@@ -426,18 +426,38 @@
     table.items {
       width: 100%;
       border-collapse: collapse;
-      table-layout: fixed;
-      border: 1px solid #333
+      table-layout: auto;
+      border: 1px solid #333;
+      font-size: 7.5pt
     }
 
     table.items th,
     table.items td {
       border: 1px solid #333;
-      padding: 3px 3px;
+      padding: 3px 2px;
       vertical-align: top;
-      overflow-wrap: anywhere;
-      font-size: 8pt
+      white-space: nowrap;
+      font-size: 1em
     }
+
+    table.items td.desc {
+      white-space: pre-line;
+      overflow-wrap: anywhere;
+      min-width: 28mm;
+      width: 100%
+    }
+
+    table.items thead th {
+      white-space: nowrap;
+      font-size: .93em;
+      padding: 3px 3px
+    }
+
+    table.items thead th.wrap {
+      white-space: normal
+    }
+
+
 
     table.items thead th {
       background: #eaf0fd;
@@ -634,7 +654,7 @@
         <div class="grid2">
           <div class="full"><label>Address (appears on the invoice)</label><textarea data-k="coAddress"
               placeholder="Shop / Office address, City, PIN"></textarea></div>
-          <div><label>Phone</label><input data-k="coPhone"></div>
+          <div><label>Mobile no.</label><input data-k="coPhone"></div>
           <div><label>Email</label><input data-k="coEmail"></div>
           <div><label>Your GSTIN</label><input data-k="coGstin" placeholder="27XXXXXXXXXXXZX"></div>
           <div><label>State / Code</label>
@@ -742,12 +762,12 @@
       function blankItem() { return { desc: "", hsn: "", qty: 1, unit: "Nos.", rate: 0, disc: 0, gst: 18 } }
       function defaults() {
         return {
-          coAddress: "", coPhone: "8356058098", coEmail: "techwave8790@gmail.com", coGstin: "27AAFPY8345R1ZJ", coState: "Maharashtra", coStateCode: "27", bank: "",
+          coAddress: "Fourth Floor Ten No.1, LIG 20, Navi Mumbai, - 400706", coPhone: "9975589895, 9823158790", coEmail: "techwave8790@gmail.com", coGstin: "27AAFPY8345R1ZJ", coState: "Maharashtra", coStateCode: "27", bank: "A/c No.: 4168976430",
           invNo: "", transport: "", poNo: "", poDate: "", supplyDate: today(), supplyTime: "17:00", vehicle: "", placeOfSupply: "",
           bName: "", bAddress: "", bState: "Maharashtra", bStateCode: "27", bGstin: RECEIVER_GSTIN,
           same: true, cName: "", cAddress: "", cState: "", cStateCode: "", cGstin: "27AAFPY8345R1ZJ",
           taxMode: "auto", freight: 0, roundMode: "auto", orientation: "portrait",
-          terms: "1. Interest @24% will be charged on invoices not paid on due date.\n2. All disputes subject to Pune jurisdiction only.",
+          terms: "Terms & Conditions:\n1. Prices are in Indian Rupees and GST is shown separately above.\n2. Delivery: Within 5–7 working days from confirmed purchase order, subject to stock availability.\n3. Payment: 100% within 15 days from delivery / invoice date.\n4. Warranty: As per respective manufacturer's standard warranty, where applicable.\n\nWe trust you will find our offer most competitive and request you favor us with your valued purchase / work order.\nWe are always at your service and thanking you in the meanwhile, we remain.\n\nThanking you,",
           items: [blankItem()]
         };
       }
@@ -758,6 +778,12 @@
         if (saved && typeof saved === "object") { S = Object.assign(defaults(), saved); if (!S.items || !S.items.length) S.items = [blankItem()] }
       } catch (e) { }
       S.bGstin = RECEIVER_GSTIN;
+      /* fill the new defaults into company details saved by an earlier version */
+      var D0 = defaults();
+      if (!S.coAddress) S.coAddress = D0.coAddress;
+      if (!S.coPhone || S.coPhone === "8356058098") S.coPhone = D0.coPhone;
+      if (!S.bank) S.bank = D0.bank;
+      if (S.terms === "1. Interest @24% will be charged on invoices not paid on due date.\n2. All disputes subject to Pune jurisdiction only.") S.terms = D0.terms;
       function persist() { try { localStorage.setItem(KEY, JSON.stringify(S)) } catch (e) { } }
 
       /* ---------- helpers ---------- */
@@ -802,13 +828,15 @@
         return (a && b && a !== b) ? "inter" : "intra";
       }
       function compute() {
-        var type = taxType(), rows = [], sum = { total: 0, disc: 0, taxable: 0, cgst: 0, sgst: 0, igst: 0 };
+        var type = taxType(), rows = [], sum = { total: 0, disc: 0, taxable: 0, cgst: 0, sgst: 0, igst: 0, net: 0 };
         S.items.forEach(function (it) {
           var qty = num(it.qty), rate = num(it.rate), gst = num(it.gst);
           var total = r2(qty * rate), disc = Math.min(Math.max(num(it.disc), 0), total), taxable = r2(total - disc);
           var row = { it: it, qty: qty, rate: rate, total: total, disc: disc, taxable: taxable, gst: gst, cr: 0, ca: 0, sr: 0, sa: 0, ir: 0, ia: 0 };
           if (type === "intra") { row.cr = row.sr = gst / 2; row.ca = r2(taxable * gst / 200); row.sa = r2(taxable * gst / 200) }
           else { row.ir = gst; row.ia = r2(taxable * gst / 100) }
+          row.net = r2(taxable + row.ca + row.sa + row.ia);
+          sum.net += row.net;
           sum.total += total; sum.disc += disc; sum.taxable += taxable; sum.cgst += row.ca; sum.sgst += row.sa; sum.igst += row.ia;
           rows.push(row);
         });
@@ -832,7 +860,7 @@
         var h = "";
         h += '<div class="inv-head"><div class="brand">' + LOGO + '<div><div class="name">TECH<b>WAVE</b></div><div class="sub">ENTERPRISES</div><div class="tag">POWERING YOUR INDUSTRY</div></div></div>';
         h += '<div class="contact">' + (S.coAddress ? '<div class="addr">' + esc(S.coAddress) + '</div>' : '') +
-          (S.coPhone ? '<div><b>Ph:</b> ' + esc(S.coPhone) + '</div>' : '') + (S.coEmail ? '<div><b>Email:</b> ' + esc(S.coEmail) + '</div>' : '') +
+          (S.coPhone ? '<div><b>Mobile:</b> ' + esc(S.coPhone) + '</div>' : '') + (S.coEmail ? '<div><b>Email:</b> ' + esc(S.coEmail) + '</div>' : '') +
           (S.coGstin ? '<div><b>GSTIN:</b> ' + '27AAFPY8345R1ZJ' + '</div>' : '') + '</div></div>';
         h += '<div class="inv-title">Tax Invoice</div>';
 
@@ -851,23 +879,23 @@
         h += '<div class="parties">' + party("Details of Receiver (Billed To)", { name: S.bName, addr: S.bAddress, state: S.bState, code: S.bStateCode, gstin: S.bGstin }) +
           party("Details of Consignee (Shipped To)", cons) + '</div>';
 
-        h += '<table class="items"><colgroup>' +
-          [3.5, 20, 6.5, 4, 4, 6, 7, 5.5, 7.5, 4, 8, 4, 8, 4, 8].map(function (w) { return '<col style="width:' + w + '%">' }).join("") + '</colgroup>' +
-          '<thead><tr><th rowspan="2">S. No</th><th rowspan="2">Description of Goods</th><th rowspan="2">HSN Code</th><th rowspan="2">Qty.</th><th rowspan="2">Unit</th><th rowspan="2">Rate</th><th rowspan="2">Total</th><th rowspan="2">Discount</th><th rowspan="2">Taxable Value</th><th colspan="2">CGST</th><th colspan="2">SGST</th><th colspan="2">IGST</th></tr>' +
+        h += '<table class="items">' +
+          '<thead><tr><th rowspan="2" class="wrap">S. No</th><th rowspan="2" class="wrap" style="min-width:28mm">Description of Goods</th><th rowspan="2" class="wrap">HSN Code</th><th rowspan="2">Qty.</th><th rowspan="2">Unit</th><th rowspan="2">Rate</th><th rowspan="2">Total</th><th rowspan="2">Discount</th><th rowspan="2" class="wrap">Taxable Value</th><th colspan="2">CGST</th><th colspan="2">SGST</th><th colspan="2">IGST</th><th rowspan="2" class="wrap">Total Amount</th></tr>' +
           '<tr><th>Rate</th><th>Amount</th><th>Rate</th><th>Amount</th><th>Rate</th><th>Amount</th></tr></thead><tbody>';
         c.rows.forEach(function (r, i) {
           var intra = c.type === "intra";
-          h += '<tr><td class="c">' + (i + 1) + '</td><td style="white-space:pre-line">' + esc(r.it.desc) + '</td><td class="c">' + esc(r.it.hsn) + '</td>' +
+          h += '<tr><td class="c">' + (i + 1) + '</td><td class="desc">' + esc(r.it.desc) + '</td><td class="c">' + esc(r.it.hsn) + '</td>' +
             '<td class="c">' + esc(r.qty) + '</td><td class="c">' + esc(r.it.unit) + '</td><td class="n">' + money(r.rate) + '</td><td class="n">' + money(r.total) + '</td>' +
             '<td class="n">' + (r.disc ? money(r.disc) : "") + '</td><td class="n">' + money(r.taxable) + '</td>' +
             '<td class="c">' + (intra ? pct(r.cr) : "") + '</td><td class="n">' + (intra ? money(r.ca) : "") + '</td>' +
             '<td class="c">' + (intra ? pct(r.sr) : "") + '</td><td class="n">' + (intra ? money(r.sa) : "") + '</td>' +
-            '<td class="c">' + (!intra ? pct(r.ir) : "") + '</td><td class="n">' + (!intra ? money(r.ia) : "") + '</td></tr>';
+            '<td class="c">' + (!intra ? pct(r.ir) : "") + '</td><td class="n">' + (!intra ? money(r.ia) : "") + '</td>' +
+            '<td class="n"><b>' + money(r.net) + '</b></td></tr>';
         });
         var fillMm = Math.max(0, 8 - c.rows.length) * 9;
-        if (fillMm) { h += '<tr class="fill" style="height:' + fillMm + 'mm">' + new Array(16).join("<td></td>") + '</tr>' }
+        if (fillMm) { h += '<tr class="fill" style="height:' + fillMm + 'mm">' + new Array(17).join("<td></td>") + '</tr>' }
         h += '<tr style="font-weight:700;background:#f5f8ff"><td colspan="6" class="n" style="border-top:1px solid #333">Sub-total</td><td class="n" style="border-top:1px solid #333">' + money(c.sum.total) + '</td><td class="n" style="border-top:1px solid #333">' + (c.sum.disc ? money(c.sum.disc) : "") + '</td><td class="n" style="border-top:1px solid #333">' + money(c.sum.taxable) + '</td>' +
-          '<td style="border-top:1px solid #333"></td><td class="n" style="border-top:1px solid #333">' + (c.type === "intra" ? money(c.sum.cgst) : "") + '</td><td style="border-top:1px solid #333"></td><td class="n" style="border-top:1px solid #333">' + (c.type === "intra" ? money(c.sum.sgst) : "") + '</td><td style="border-top:1px solid #333"></td><td class="n" style="border-top:1px solid #333">' + (c.type === "inter" ? money(c.sum.igst) : "") + '</td></tr>';
+          '<td style="border-top:1px solid #333"></td><td class="n" style="border-top:1px solid #333">' + (c.type === "intra" ? money(c.sum.cgst) : "") + '</td><td style="border-top:1px solid #333"></td><td class="n" style="border-top:1px solid #333">' + (c.type === "intra" ? money(c.sum.sgst) : "") + '</td><td style="border-top:1px solid #333"></td><td class="n" style="border-top:1px solid #333">' + (c.type === "inter" ? money(c.sum.igst) : "") + '</td><td class="n" style="border-top:1px solid #333">' + money(c.sum.net) + '</td></tr>';
         h += '</tbody></table>';
 
         h += '<div class="bottom"><div class="row"><div class="left"><div><b>INVOICE TOTAL (In Words)</b></div><div class="words">' + esc(amountWords(c.grand)) + '</div>' +
@@ -881,7 +909,19 @@
         sh.innerHTML = h;
         sh.classList.toggle("landscape", landscape);
         $("#pageRule").textContent = "@page{size:A4 " + (landscape ? "landscape" : "portrait") + ";margin:8mm}";
+        sh.style.zoom = "";
+        fitTable();
         fitPreview();
+      }
+
+      /* shrink the table font until every column fits the page width (descriptions wrap, numbers never overflow) */
+      function fitTable() {
+        var sh = $("#sheet"), t = $("table.items");
+        if (!t) return;
+        var cs = getComputedStyle(sh), avail = sh.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+        var fs = 7.5;
+        t.style.fontSize = fs + "pt";
+        while (fs > 4.5 && t.offsetWidth > avail + 0.5) { fs -= 0.25; t.style.fontSize = fs + "pt" }
       }
 
       /* shrink the A4 sheet on narrow screens (screen only; print resets zoom) */
