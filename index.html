@@ -376,6 +376,17 @@
       text-transform: uppercase
     }
 
+    .inv-title .hl {
+      display: inline-block;
+      background: var(--orange);
+      color: #fff;
+      padding: 2px 26px;
+      border-radius: 3px;
+      letter-spacing: 3px;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact
+    }
+
     .meta {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -649,6 +660,18 @@
     <!-- ================= FORM ================= -->
     <div class="panel">
 
+      <div class="card" id="xlCard">
+        <h2>Excel register</h2>
+        <p class="hint" id="xlStatus">Not linked. Link your Excel register once; every invoice and quotation you print or save is then added to it automatically.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-small" id="xlOpen">📂 Open existing register</button>
+          <button class="btn-small" id="xlNew">➕ Create new register</button>
+          <button class="btn-small" id="xlSave" style="background:#fde9dc;color:#a8420a">💾 Save this invoice to Excel</button>
+          <button class="btn-small" id="xlDownload">⬇ Download register</button>
+        </div>
+        <p class="hint" style="margin-top:8px" id="xlMsg"></p>
+      </div>
+
       <details class="card">
         <summary>Your company (saved on this device)</summary>
         <div class="grid2">
@@ -669,13 +692,23 @@
       <div class="card">
         <h2>Invoice details</h2>
         <div class="grid2">
-          <div><label>Serial Number Invoice</label><input data-k="invNo" placeholder="001/2026-27"></div>
+          <div class="full"><label>Document type</label>
+            <select data-k="docType" style="font-weight:700">
+              <option value="invoice">Tax Invoice</option>
+              <option value="quotation">Quotation</option>
+            </select>
+          </div>
+          <div><label id="lblNo">Serial Number Invoice (auto)</label><input data-k="invNo" readonly tabindex="-1" title="Generated automatically" style="background:#f1f4fa;font-weight:700;color:#0b2a6b;cursor:not-allowed"></div>
           <div><label>Mode of Transport</label><input data-k="transport" placeholder="Courier / Road"></div>
           <div><label>P.O. No.</label><input data-k="poNo"></div>
           <div><label>P.O. Date</label><input type="date" data-k="poDate"></div>
           <div><label>Date of Supply</label><input type="date" data-k="supplyDate"></div>
           <div><label>Time of Supply</label><input type="time" data-k="supplyTime"></div>
           <div><label>Vehicle No.</label><input data-k="vehicle"></div>
+          <div><label id="lblDue">Due Date (Excel only)</label><input type="date" data-k="dueDate"></div>
+          <div><label id="lblStatus">Payment Status (Excel only)</label>
+            <select data-k="payStatus"><option value=""></option><option>Unpaid</option><option>Paid</option><option>Partially Paid</option><option>Overdue</option></select>
+          </div>
           <div><label>Place of Supply</label><input data-k="placeOfSupply"></div>
         </div>
       </div>
@@ -766,7 +799,7 @@
           invNo: "", transport: "", poNo: "", poDate: "", supplyDate: today(), supplyTime: "17:00", vehicle: "", placeOfSupply: "",
           bName: "", bAddress: "", bState: "Maharashtra", bStateCode: "27", bGstin: RECEIVER_GSTIN,
           same: true, cName: "", cAddress: "", cState: "", cStateCode: "", cGstin: "27AAFPY8345R1ZJ",
-          taxMode: "auto", freight: 0, roundMode: "auto", orientation: "portrait",
+          docType: "invoice", recNo: "", dueDate: "", payStatus: "", taxMode: "auto", freight: 0, roundMode: "auto", orientation: "portrait",
           terms: "Terms & Conditions:\n1. Prices are in Indian Rupees and GST is shown separately above.\n2. Delivery: Within 5–7 working days from confirmed purchase order, subject to stock availability.\n3. Payment: 100% within 15 days from delivery / invoice date.\n4. Warranty: As per respective manufacturer's standard warranty, where applicable.\n\nWe trust you will find our offer most competitive and request you favor us with your valued purchase / work order.\nWe are always at your service and thanking you in the meanwhile, we remain.\n\nThanking you,",
           items: [blankItem()]
         };
@@ -822,6 +855,8 @@
           : { name: S.cName, addr: S.cAddress, state: S.cState, code: S.cStateCode, gstin: S.cGstin };
       }
       function taxType() {
+        /* quotations show GST as one combined amount (IGST columns); CGST / SGST columns are not shown */
+        if (S.docType === "quotation") return "inter";
         if (S.taxMode === "intra") return "intra";
         if (S.taxMode === "inter") return "inter";
         var a = String(S.coStateCode || "").trim(), b = String(consigneeOf().code || S.bStateCode || "").trim();
@@ -862,7 +897,8 @@
         h += '<div class="contact">' + (S.coAddress ? '<div class="addr">' + esc(S.coAddress) + '</div>' : '') +
           (S.coPhone ? '<div><b>Mobile:</b> ' + esc(S.coPhone) + '</div>' : '') + (S.coEmail ? '<div><b>Email:</b> ' + esc(S.coEmail) + '</div>' : '') +
           (S.coGstin ? '<div><b>GSTIN:</b> ' + '27AAFPY8345R1ZJ' + '</div>' : '') + '</div></div>';
-        h += '<div class="inv-title">Tax Invoice</div>';
+        h += S.docType === "quotation" ? '<div class="inv-title"><span class="hl">Quotation</span></div>' : '<div class="inv-title">Tax Invoice</div>';
+        document.title = (S.docType === "quotation" ? "Quotation" : "Tax Invoice") + (S.invNo ? " " + S.invNo.replace(/[\\/:*?"<>|]+/g, "-") : "") + " - Techwave Enterprises";
 
         h += '<div class="meta">' +
           '<div><b>GSTIN:</b> ' + '27AAFPY8345R1ZJ' + '</div><div><b>Mode of Transport:</b> ' + esc(S.transport) + '</div>' +
@@ -879,23 +915,24 @@
         h += '<div class="parties">' + party("Details of Receiver (Billed To)", { name: S.bName, addr: S.bAddress, state: S.bState, code: S.bStateCode, gstin: S.bGstin }) +
           party("Details of Consignee (Shipped To)", cons) + '</div>';
 
+        var isQ = S.docType === "quotation";
         h += '<table class="items">' +
-          '<thead><tr><th rowspan="2" class="wrap">S. No</th><th rowspan="2" class="wrap" style="min-width:28mm">Description of Goods</th><th rowspan="2" class="wrap">HSN Code</th><th rowspan="2">Qty.</th><th rowspan="2">Unit</th><th rowspan="2">Rate</th><th rowspan="2">Total</th><th rowspan="2">Discount</th><th rowspan="2" class="wrap">Taxable Value</th><th colspan="2">CGST</th><th colspan="2">SGST</th><th colspan="2">IGST</th><th rowspan="2" class="wrap">Total Amount</th></tr>' +
-          '<tr><th>Rate</th><th>Amount</th><th>Rate</th><th>Amount</th><th>Rate</th><th>Amount</th></tr></thead><tbody>';
+          '<thead><tr><th rowspan="2" class="wrap">S. No</th><th rowspan="2" class="wrap" style="min-width:28mm">Description of Goods</th><th rowspan="2" class="wrap">HSN Code</th><th rowspan="2">Qty.</th><th rowspan="2">Unit</th><th rowspan="2">Rate</th><th rowspan="2">Total</th><th rowspan="2">Discount</th><th rowspan="2" class="wrap">Taxable Value</th>' + (isQ ? "" : '<th colspan="2">CGST</th><th colspan="2">SGST</th>') + '<th colspan="2">IGST</th><th rowspan="2" class="wrap">Total Amount</th></tr>' +
+          '<tr>' + (isQ ? "" : "<th>Rate</th><th>Amount</th><th>Rate</th><th>Amount</th>") + '<th>Rate</th><th>Amount</th></tr></thead><tbody>';
         c.rows.forEach(function (r, i) {
           var intra = c.type === "intra";
           h += '<tr><td class="c">' + (i + 1) + '</td><td class="desc">' + esc(r.it.desc) + '</td><td class="c">' + esc(r.it.hsn) + '</td>' +
             '<td class="c">' + esc(r.qty) + '</td><td class="c">' + esc(r.it.unit) + '</td><td class="n">' + money(r.rate) + '</td><td class="n">' + money(r.total) + '</td>' +
             '<td class="n">' + (r.disc ? money(r.disc) : "") + '</td><td class="n">' + money(r.taxable) + '</td>' +
-            '<td class="c">' + (intra ? pct(r.cr) : "") + '</td><td class="n">' + (intra ? money(r.ca) : "") + '</td>' +
-            '<td class="c">' + (intra ? pct(r.sr) : "") + '</td><td class="n">' + (intra ? money(r.sa) : "") + '</td>' +
+            (isQ ? "" : '<td class="c">' + (intra ? pct(r.cr) : "") + '</td><td class="n">' + (intra ? money(r.ca) : "") + '</td>' +
+            '<td class="c">' + (intra ? pct(r.sr) : "") + '</td><td class="n">' + (intra ? money(r.sa) : "") + '</td>') +
             '<td class="c">' + (!intra ? pct(r.ir) : "") + '</td><td class="n">' + (!intra ? money(r.ia) : "") + '</td>' +
             '<td class="n"><b>' + money(r.net) + '</b></td></tr>';
         });
         var fillMm = Math.max(0, 8 - c.rows.length) * 9;
-        if (fillMm) { h += '<tr class="fill" style="height:' + fillMm + 'mm">' + new Array(17).join("<td></td>") + '</tr>' }
+        if (fillMm) { h += '<tr class="fill" style="height:' + fillMm + 'mm">' + new Array(isQ ? 13 : 17).join("<td></td>") + '</tr>' }
         h += '<tr style="font-weight:700;background:#f5f8ff"><td colspan="6" class="n" style="border-top:1px solid #333">Sub-total</td><td class="n" style="border-top:1px solid #333">' + money(c.sum.total) + '</td><td class="n" style="border-top:1px solid #333">' + (c.sum.disc ? money(c.sum.disc) : "") + '</td><td class="n" style="border-top:1px solid #333">' + money(c.sum.taxable) + '</td>' +
-          '<td style="border-top:1px solid #333"></td><td class="n" style="border-top:1px solid #333">' + (c.type === "intra" ? money(c.sum.cgst) : "") + '</td><td style="border-top:1px solid #333"></td><td class="n" style="border-top:1px solid #333">' + (c.type === "intra" ? money(c.sum.sgst) : "") + '</td><td style="border-top:1px solid #333"></td><td class="n" style="border-top:1px solid #333">' + (c.type === "inter" ? money(c.sum.igst) : "") + '</td><td class="n" style="border-top:1px solid #333">' + money(c.sum.net) + '</td></tr>';
+          (isQ ? "" : '<td style="border-top:1px solid #333"></td><td class="n" style="border-top:1px solid #333">' + (c.type === "intra" ? money(c.sum.cgst) : "") + '</td><td style="border-top:1px solid #333"></td><td class="n" style="border-top:1px solid #333">' + (c.type === "intra" ? money(c.sum.sgst) : "") + '</td>') + '<td style="border-top:1px solid #333"></td><td class="n" style="border-top:1px solid #333">' + (c.type === "inter" ? money(c.sum.igst) : "") + '</td><td class="n" style="border-top:1px solid #333">' + money(c.sum.net) + '</td></tr>';
         h += '</tbody></table>';
 
         h += '<div class="bottom"><div class="row"><div class="left"><div><b>INVOICE TOTAL (In Words)</b></div><div class="words">' + esc(amountWords(c.grand)) + '</div>' +
@@ -981,6 +1018,7 @@
           var k = el.getAttribute("data-k");
           S[k] = el.type === "checkbox" ? el.checked : el.value;
           if (k === "same") $("#consigneeFields").style.display = S.same ? "none" : "";
+          if (k === "docType") onDocType();
           persist(); render();
         });
         el.addEventListener("change", function () { if (el.type === "checkbox") el.dispatchEvent(new Event("input")) });
@@ -988,15 +1026,14 @@
 
       /* ---------- buttons ---------- */
       $("#btnPrint").addEventListener("click", function () {
-        // on phones make sure the preview is what gets printed
-        window.print();
+        recordAndPrint();
       });
       $("#btnReset").addEventListener("click", function () {
         if (!confirm("Start a new invoice? Your company details will be kept.")) return;
         var d = defaults();
         COMPANY_KEYS.forEach(function (k) { d[k] = S[k] });
-        d.terms = S.terms; d.orientation = S.orientation;
-        S = d; persist(); syncForm(); renderItems(); render();
+        d.terms = S.terms; d.orientation = S.orientation; d.docType = S.docType;
+        S = d; S.invNo = nextInvNo(); persist(); applyDocType(); syncForm(); renderItems(); render();
       });
       function tab(which) {
         document.body.className = "tab-" + which;
@@ -1007,8 +1044,337 @@
       $("#tabEdit").addEventListener("click", function () { tab("edit") });
       $("#tabPrev").addEventListener("click", function () { tab("preview") });
 
+
+      /* =====================================================================
+         EXCEL REGISTERS  (File System Access API + ExcelJS, loaded on demand)
+         One workbook, two sheets: "Invoice Register" and "Quotation Register".
+         Records are upserted by number, so a number is never duplicated.
+         Numbers: invoices 001/2026-27 · quotations QT-001/2026-27 (financial year Apr–Mar)
+         ===================================================================== */
+      var XL_URL = "https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js";
+      var FIRST = 5, LAST = 1004;
+      var CFG = {
+        invoice: {
+          type: "invoice", sheet: "Invoice Register", prefix: "", logKey: "techwave_invoice_log_v1", ctrKey: "techwave_invoice_counter_v1",
+          head: ["Invoice Number", "Invoice Date", "Vendor / Supplier Name", "Customer Name", "GST Number", "Taxable Amount (₹)", "CGST (₹)", "SGST (₹)", "IGST (₹)", "Total Invoice Amount (₹)", "Due Date", "Payment Status", "Verification", "Source File", "Remarks"],
+          widths: [18, 13, 30, 30, 20, 17, 14, 14, 14, 20, 13, 15, 30, 26, 30], n: 15, money: [6, 10], dates: [2, 11], statusCol: 12, verifCol: 13, srcCol: 14, remCol: 15,
+          statusList: ["Paid", "Unpaid", "Partially Paid", "Overdue"], req: ["B", "C", "D", "E", "J", "L"], sum: ["F", "G", "H", "I"], tot: "J"
+        },
+        quotation: {
+          type: "quotation", sheet: "Quotation Register", prefix: "QT-", logKey: "techwave_quotation_log_v1", ctrKey: "techwave_quotation_counter_v1",
+          head: ["Quotation Number", "Quotation Date", "Vendor / Supplier Name", "Customer Name", "GST Number", "Taxable Amount (₹)", "GST Amount (₹)", "Total Quotation Amount (₹)", "Valid Until", "Quotation Status", "Verification", "Source File", "Remarks"],
+          widths: [20, 13, 30, 30, 20, 17, 16, 22, 13, 17, 30, 26, 30], n: 13, money: [6, 8], dates: [2, 9], statusCol: 10, verifCol: 11, srcCol: 12, remCol: 13,
+          statusList: ["Open", "Accepted", "Rejected", "Expired"], req: ["B", "C", "D", "E", "H", "J"], sum: ["F", "G"], tot: "H"
+        }
+      };
+      function cfgNow() { return S.docType === "quotation" ? CFG.quotation : CFG.invoice }
+      function colL(i) { return String.fromCharCode(64 + i) }
+      var fileHandle = null;
+
+      function setMsg(t, bad) { var m = $("#xlMsg"); m.textContent = t || ""; m.style.color = bad ? "#b42318" : "#1a7f37" }
+      function setStatus() {
+        $("#xlStatus").textContent = fileHandle ? "Linked to: " + fileHandle.name + " — invoices and quotations are added to this file automatically (separate sheets)." : "Not linked. Link your Excel register once; every invoice and quotation you print or save is then added to it automatically.";
+      }
+      var hasFS = !!(window.showOpenFilePicker && window.showSaveFilePicker);
+      if (!hasFS) { $("#xlOpen").style.display = "none"; $("#xlNew").style.display = "none"; $("#xlStatus").textContent = "This browser cannot write to a file directly (use Chrome or Edge on a computer). Records are still kept in this browser; use “Download register” to get the Excel file." }
+
+      /* --- remember the linked file between visits (IndexedDB) --- */
+      function idb(mode, fn) {
+        return new Promise(function (res, rej) {
+          try {
+            var rq = indexedDB.open("techwave_xl", 1);
+            rq.onupgradeneeded = function () { rq.result.createObjectStore("h") };
+            rq.onerror = function () { rej(rq.error) };
+            rq.onsuccess = function () { try { var tx = rq.result.transaction("h", mode), st = tx.objectStore("h"), r = fn(st); tx.oncomplete = function () { res(r && r.result) }; tx.onerror = function () { rej(tx.error) } } catch (e) { rej(e) } };
+          } catch (e) { rej(e) }
+        });
+      }
+      function loadHandle() { return idb("readonly", function (st) { return st.get("handle") }).then(function (h) { if (h) { fileHandle = h; setStatus() } }).catch(function () { }) }
+      function storeHandle(h) { return idb("readwrite", function (st) { return st.put(h, "handle") }).catch(function () { }) }
+      async function ensurePerm(h) {
+        var o = { mode: "readwrite" };
+        if (h.queryPermission && (await h.queryPermission(o)) === "granted") return true;
+        return h.requestPermission ? (await h.requestPermission(o)) === "granted" : true;
+      }
+
+      /* --- local log of every saved record (backup + source for "Download register") --- */
+      function readLog(cfg) { try { return JSON.parse(localStorage.getItem(cfg.logKey) || "[]") } catch (e) { return [] } }
+      function upsertLog(cfg, rec) {
+        var log = readLog(cfg), k = rec.no.toUpperCase(), i = log.findIndex(function (r) { return String(r.no).toUpperCase() === k });
+        if (i >= 0) log[i] = rec; else log.push(rec);
+        try { localStorage.setItem(cfg.logKey, JSON.stringify(log)) } catch (e) { }
+        return i >= 0;
+      }
+
+      /* --- automatic numbers --- */
+      function fyOf(d) { d = d || new Date(); var y = d.getFullYear(), m = d.getMonth() + 1, a = m >= 4 ? y : y - 1; return a + "-" + String((a + 1) % 100).padStart(2, "0") }
+      function noRe(cfg) { return new RegExp("^\\s*" + cfg.prefix + "(\\d+)\\s*/\\s*(\\d{4}-\\d{2})\\s*$") }
+      function isValidNo(cfg, no) { return noRe(cfg).test(String(no || "")) }
+      function seqOf(cfg, no, fy) { var m = noRe(cfg).exec(String(no || "")); return m && m[2] === fy ? parseInt(m[1], 10) : 0 }
+      function readCtr(cfg) { try { return JSON.parse(localStorage.getItem(cfg.ctrKey) || "{}") || {} } catch (e) { return {} } }
+      function bumpCounter(cfg, no) {
+        var m = noRe(cfg).exec(String(no || "")); if (!m) return;
+        var c = readCtr(cfg), n = parseInt(m[1], 10); if (!(c[m[2]] >= n)) { c[m[2]] = n; try { localStorage.setItem(cfg.ctrKey, JSON.stringify(c)) } catch (e) { } }
+      }
+      function makeNo(cfg, n, fy) { return cfg.prefix + String(n).padStart(3, "0") + "/" + fy }
+      function highest(cfg, fy) { var hi = readCtr(cfg)[fy] || 0; readLog(cfg).forEach(function (r) { hi = Math.max(hi, seqOf(cfg, r.no, fy)) }); return hi }
+      function nextNo(cfg) { var fy = fyOf(); return makeNo(cfg, highest(cfg, fy) + 1, fy) }
+      function nextInvNo() { return nextNo(cfgNow()) }
+
+      /* --- form labels that depend on the document type --- */
+      function applyDocType() {
+        var q = S.docType === "quotation", cfg = cfgNow();
+        $("#lblNo").textContent = q ? "Quotation Number (auto)" : "Serial Number Invoice (auto)";
+        $("#lblDue").textContent = q ? "Valid Until (Excel only)" : "Due Date (Excel only)";
+        $("#lblStatus").textContent = q ? "Quotation Status (Excel only)" : "Payment Status (Excel only)";
+        $("#xlSave").textContent = q ? "💾 Save this quotation to Excel" : "💾 Save this invoice to Excel";
+        var sel = $("[data-k=payStatus]"), list = [""].concat(cfg.statusList);
+        if (list.indexOf(S.payStatus) < 0) S.payStatus = "";
+        sel.innerHTML = list.map(function (o) { return '<option value="' + o + '">' + o + "</option>" }).join("");
+        sel.value = S.payStatus;
+      }
+      function onDocType() { S.invNo = nextInvNo(); S.payStatus = ""; S.recNo = ""; applyDocType(); syncForm(); persist() }
+
+      function recordOf(cfg) {
+        var c = compute(), rem = [], q = cfg.type === "quotation";
+        if (c.freight) rem.push("Includes freight ₹" + money(c.freight));
+        if (c.round) rem.push("Round-off " + (c.round > 0 ? "+" : "−") + money(Math.abs(c.round)));
+        return { no: String(S.invNo || "").trim(), date: S.supplyDate || "", vendor: "Techwave Enterprises", cust: String(S.bName || "").trim(), gst: S.coGstin || "",
+          taxable: c.sum.taxable, cgst: c.sum.cgst, sgst: c.sum.sgst, igst: c.sum.igst, total: c.grand, due: S.dueDate || "", status: S.payStatus || "",
+          src: q ? "Quotation generator" : "Invoice generator", rem: rem.join("; ") };
+      }
+      function isoDate(v) { if (!v) return null; var p = v.split("-"); return p.length === 3 ? new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])) : null }
+      function blank(v) { return v === "" || v === undefined ? null : v }
+      function cellVals(cfg, rec) {
+        if (cfg.type === "quotation") return [rec.no, isoDate(rec.date), rec.vendor, blank(rec.cust), blank(rec.gst), rec.taxable, r2(rec.cgst + rec.sgst + rec.igst), rec.total, isoDate(rec.due), blank(rec.status)];
+        return [rec.no, isoDate(rec.date), rec.vendor, blank(rec.cust), blank(rec.gst), rec.taxable, rec.cgst, rec.sgst, rec.igst, rec.total, isoDate(rec.due), blank(rec.status)];
+      }
+
+      function loadExcelJS() {
+        if (window.ExcelJS) return Promise.resolve(window.ExcelJS);
+        return new Promise(function (res, rej) {
+          var sc = document.createElement("script"); sc.src = XL_URL;
+          sc.onload = function () { window.ExcelJS ? res(window.ExcelJS) : rej(new Error("Excel library did not load")) };
+          sc.onerror = function () { rej(new Error("Could not load the Excel library (check your internet connection)")) };
+          document.head.appendChild(sc);
+        });
+      }
+
+      function verifF(cfg, r) {
+        var lastData = colL(cfg.statusCol), vl = colL(cfg.verifCol);
+        var req = cfg.req.map(function (c) { return c + r + '=""' }).join(",");
+        var sum = cfg.sum.map(function (c) { return c + r }).join("+");
+        return 'IF(COUNTA(A' + r + ':' + lastData + r + ')=0,"",IF(TRIM(A' + r + ')="","MISSING NUMBER",IF(COUNTIF($A$' + FIRST + ':$A$' + LAST + ',A' + r + ')>1,"DUPLICATE NUMBER",' +
+          'IF(OR(' + req + '),"VERIFY – missing details",IF(ABS(' + sum + '-' + cfg.tot + r + ')>1,"VERIFY – total ≠ taxable + tax (freight/round-off?)","OK"))))) ';
+      }
+      var thin = { style: "thin", color: { argb: "FFBFC8DC" } }, BOX = { top: thin, left: thin, bottom: thin, right: thin };
+      var MONEY = '#,##0.00;[Red]-#,##0.00;"-"';
+
+      function styleRow(ws, cfg, r) {
+        for (var i = 1; i <= cfg.n; i++) {
+          var c = ws.getCell(r, i), isDate = cfg.dates.indexOf(i) >= 0;
+          c.font = { name: "Arial", size: 10, bold: i === cfg.verifCol }; c.border = BOX;
+          c.alignment = { vertical: "middle", wrapText: i === 3 || i === 4 || i === cfg.remCol, horizontal: isDate ? "center" : undefined };
+          if (isDate) c.numFmt = "DD-MMM-YYYY";
+          if (i >= cfg.money[0] && i <= cfg.money[1]) c.numFmt = MONEY;
+          if (i === 1) c.numFmt = "@";
+        }
+        ws.getCell(r, cfg.verifCol).value = { formula: verifF(cfg, r).trim() };
+      }
+
+      function addRegisterSheet(wb, cfg) {
+        var ws = wb.addWorksheet(cfg.sheet, { views: [{ state: "frozen", xSplit: 1, ySplit: 4 }] }), lastL = colL(cfg.n), vl = colL(cfg.verifCol);
+        ws.getCell("A1").value = "Techwave Enterprises – " + cfg.sheet; ws.getCell("A1").font = { name: "Arial", size: 16, bold: true, color: { argb: "FF0B2A6B" } };
+        ws.getCell("A2").value = "One row per record, keyed by number. Blank cells are left blank on purpose – the Verification column flags them. Rows turn red for duplicate numbers and amber when data is missing or totals do not add up.";
+        ws.getCell("A2").font = { name: "Arial", size: 9, italic: true, color: { argb: "FF5B6785" } };
+        cfg.head.forEach(function (h, i) {
+          var c = ws.getCell(4, i + 1); c.value = h; c.font = { name: "Arial", bold: true, size: 10, color: { argb: "FFFFFFFF" } };
+          c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF0B2A6B" } }; c.alignment = { horizontal: "center", vertical: "middle", wrapText: true }; c.border = BOX;
+          ws.getColumn(i + 1).width = cfg.widths[i];
+        });
+        ws.getRow(4).height = 32;
+        for (var r = FIRST; r <= LAST; r++) {
+          styleRow(ws, cfg, r);
+          ws.getCell(r, cfg.statusCol).dataValidation = { type: "list", allowBlank: true, formulae: ['"' + cfg.statusList.join(",") + '"'] };
+        }
+        ws.autoFilter = "A4:" + lastL + LAST;
+        var fill = function (a) { return { fill: { type: "pattern", pattern: "solid", bgColor: { argb: a } } } };
+        ws.addConditionalFormatting({ ref: "A" + FIRST + ":" + lastL + LAST, rules: [
+          { type: "expression", formulae: ['LEFT($' + vl + FIRST + ',3)="DUP"'], style: fill("FFF8C9C4") },
+          { type: "expression", formulae: ['OR(LEFT($' + vl + FIRST + ',3)="VER",LEFT($' + vl + FIRST + ',3)="MIS")'], style: fill("FFFFE8B0") }] });
+        ws.addConditionalFormatting({ ref: vl + FIRST + ":" + vl + LAST, rules: [{ type: "expression", formulae: ['$' + vl + FIRST + '="OK"'], style: fill("FFD5EFD8") }] });
+        ws.pageSetup = { orientation: "landscape", fitToPage: true, fitToWidth: 1, fitToHeight: 0, printTitlesRow: "4:4" };
+        return ws;
+      }
+      function rangeOf(cfg, col) { return "'" + cfg.sheet + "'!" + col + FIRST + ":" + col + LAST }
+      function sumRows(sm, startRow, rows) {
+        rows.forEach(function (x, i) {
+          var a = sm.getCell(startRow + i, 1), b = sm.getCell(startRow + i, 2);
+          a.value = x[0]; a.font = { name: "Arial", size: 10 }; a.border = BOX;
+          b.value = { formula: x[1] }; b.font = { name: "Arial", size: 10, bold: true }; b.numFmt = x[2]; b.border = BOX;
+        });
+      }
+      function addQuoteSummary(wb) {
+        var sm = wb.getWorksheet("Summary"); if (!sm) return;
+        if (sm.getCell(13, 1).value) return;
+        var Q = CFG.quotation;
+        sumRows(sm, 13, [["Quotations recorded", "COUNTA(" + rangeOf(Q, "A") + ")", "0"], ["Total quotation value (₹)", "SUM(" + rangeOf(Q, "H") + ")", "#,##0.00"]]);
+      }
+      /* brand-new register workbook */
+      function buildFresh(EJ) {
+        var wb = new EJ.Workbook(); wb.creator = "Techwave Enterprises";
+        var I = CFG.invoice;
+        addRegisterSheet(wb, I); addRegisterSheet(wb, CFG.quotation);
+        var sm = wb.addWorksheet("Summary");
+        sm.getCell("A1").value = "Register Summary"; sm.getCell("A1").font = { name: "Arial", size: 14, bold: true, color: { argb: "FF0B2A6B" } };
+        var R = function (c) { return rangeOf(I, c) };
+        sumRows(sm, 3, [["Invoices recorded", "COUNTA(" + R("A") + ")", "0"],
+          ["Rows needing verification", 'COUNTIF(' + R("M") + ',"VERIFY*")+COUNTIF(' + R("M") + ',"MISSING*")', "0"],
+          ["Duplicate invoice numbers", 'COUNTIF(' + R("M") + ',"DUPLICATE*")', "0"],
+          ["Total taxable amount (₹)", "SUM(" + R("F") + ")", "#,##0.00"], ["Total CGST (₹)", "SUM(" + R("G") + ")", "#,##0.00"],
+          ["Total SGST (₹)", "SUM(" + R("H") + ")", "#,##0.00"], ["Total IGST (₹)", "SUM(" + R("I") + ")", "#,##0.00"],
+          ["Total invoiced amount (₹)", "SUM(" + R("J") + ")", "#,##0.00"],
+          ["Unpaid / Overdue / Partially paid (₹)", ["Unpaid", "Overdue", "Partially Paid"].map(function (t) { return 'SUMIF(' + R("L") + ',"' + t + '",' + R("J") + ')' }).join("+"), "#,##0.00"]]);
+        sm.getColumn(1).width = 40; sm.getColumn(2).width = 20;
+        addQuoteSummary(wb);
+        var hw = wb.addWorksheet("How to use"); hw.getColumn(1).width = 130;
+        ["How this register works", "",
+          "• Invoice Register holds tax invoices; Quotation Register holds quotations. They are kept on separate sheets.",
+          "• Each record has its own row, keyed by number (invoices 001/2026-27, quotations QT-001/2026-27). A number appearing twice turns both rows red.",
+          "• Records made in the Techwave generators are added automatically; re-saving the same number updates its row instead of adding another.",
+          "• Anything missing or unclear is left blank, never guessed. The Verification column shows 'VERIFY' until it is checked.",
+          "• GST Number is the supplier's GSTIN. Vendor = who issued the document, Customer = who it was addressed to.",
+          "• Quotations show GST as one combined amount. Total = final amount (includes freight / round-off).",
+          "• Payment Status: Paid, Unpaid, Partially Paid, Overdue. Quotation Status: Open, Accepted, Rejected, Expired."].forEach(function (t, i) {
+          var c = hw.getCell(i + 1, 1); c.value = t; c.font = { name: "Arial", size: i === 0 ? 14 : 10, bold: i === 0, color: { argb: i === 0 ? "FF0B2A6B" : "FF000000" } };
+        });
+        return wb;
+      }
+
+      function writeRec(ws, cfg, r, rec) {
+        cellVals(cfg, rec).forEach(function (x, i) { ws.getCell(r, i + 1).value = x === undefined ? null : x });
+        ws.getCell(r, cfg.srcCol).value = rec.src; ws.getCell(r, cfg.remCol).value = blank(rec.rem);
+      }
+      function scanSheet(ws) {
+        var map = {}, last = FIRST - 1;
+        for (var r = FIRST; r <= Math.max(ws.rowCount, LAST); r++) {
+          var v = ws.getCell(r, 1).value;
+          if (v !== null && v !== undefined && String(v).trim() !== "") { last = r; var k = String(v).trim().toUpperCase(); if (!map[k]) map[k] = r }
+        }
+        return { map: map, last: last };
+      }
+      async function writeToHandle(h, EJ, rec, cfg, isNew) {
+        var file = await h.getFile(), wb;
+        if (file.size > 0) {
+          wb = new EJ.Workbook(); await wb.xlsx.load(await file.arrayBuffer());
+          if (!wb.getWorksheet(CFG.invoice.sheet) && !wb.getWorksheet(CFG.quotation.sheet)) throw new Error("This Excel file is not a Techwave register (no “" + CFG.invoice.sheet + "” sheet). Choose the register file or create a new one.");
+        } else wb = buildFresh(EJ);
+        var ws = wb.getWorksheet(cfg.sheet);
+        if (!ws) { ws = addRegisterSheet(wb, cfg); if (cfg.type === "quotation") addQuoteSummary(wb) }
+        var sc = scanSheet(ws), renum = false;
+        /* a brand-new document whose number is already taken in the file (e.g. issued from another page): take the next free number */
+        if (isNew && sc.map[rec.no.toUpperCase()]) {
+          var fy = fyOf(), hi = highest(cfg, fy);
+          Object.keys(sc.map).forEach(function (k) { hi = Math.max(hi, seqOf(cfg, k, fy)) });
+          rec.no = makeNo(cfg, hi + 1, fy); renum = true; sc = scanSheet(ws);
+        }
+        var hit = sc.map[rec.no.toUpperCase()], result;
+        if (hit) { writeRec(ws, cfg, hit, rec); result = "updated" }
+        else { var row = sc.last + 1; if (row > LAST) styleRow(ws, cfg, row); writeRec(ws, cfg, row, rec); result = "added" }
+        wb.calcProperties = { fullCalcOnLoad: true };
+        var buf = await wb.xlsx.writeBuffer();
+        var w = await h.createWritable(); await w.write(buf); await w.close();
+        return { result: result, renumbered: renum };
+      }
+
+      /* save the current invoice / quotation. Resolves {ok, reason, text} */
+      async function saveRecord() {
+        var cfg = cfgNow(), word = cfg.type === "quotation" ? "Quotation" : "Invoice", rec = recordOf(cfg);
+        if (!rec.no) return { ok: false, reason: "nonumber", text: "The " + word.toLowerCase() + " number is empty – it is the unique key of each Excel record." };
+        if (!fileHandle) {
+          var was = upsertLog(cfg, rec); bumpCounter(cfg, rec.no); S.recNo = rec.no; persist();
+          return { ok: true, text: word + " " + (was ? "updated" : "saved") + " in this browser's register. Link an Excel file to write it to Excel too." };
+        }
+        try {
+          if (!(await ensurePerm(fileHandle))) return { ok: false, reason: "perm", text: "Permission to edit the Excel file was not given." };
+          var EJ = await loadExcelJS(), res = await writeToHandle(fileHandle, EJ, rec, cfg, S.recNo !== rec.no);
+          if (res.renumbered) { S.invNo = rec.no }
+          S.recNo = rec.no; upsertLog(cfg, rec); bumpCounter(cfg, rec.no); persist();
+          if (res.renumbered) { syncForm(); render() }
+          return { ok: true, text: word + " " + rec.no + (res.renumbered ? " was already taken in the file, so the next free number was used and " : " ") + (res.result === "updated" ? "already existed – its row was updated (no duplicate)." : "added to the " + cfg.sheet + " sheet of " + fileHandle.name + ".") };
+        } catch (e) {
+          var m = String(e && e.message || e);
+          if (/NotAllowed|Permission/i.test(m)) m = "The Excel file could not be written. Close it in Excel (a file open in Excel is locked) and try again.";
+          return { ok: false, reason: "error", text: m };
+        }
+      }
+
+      async function recordAndPrint() {
+        var r = await saveRecord();
+        setMsg(r.text, !r.ok);
+        if (!r.ok) {
+          if (!confirm(r.text + "\n\nThis document will NOT be recorded in Excel. Print anyway?")) return;
+        }
+        window.print();
+      }
+
+      /* when a register file is linked, learn the numbers already in it */
+      async function syncCounterFromFile(h, EJ) {
+        var f = await h.getFile(); if (!f.size) return;
+        var wb = new EJ.Workbook(); await wb.xlsx.load(await f.arrayBuffer());
+        [CFG.invoice, CFG.quotation].forEach(function (cfg) {
+          var ws = wb.getWorksheet(cfg.sheet); if (!ws) return;
+          for (var r = FIRST; r <= Math.max(ws.rowCount, LAST); r++) { var v = ws.getCell(r, 1).value; if (v) bumpCounter(cfg, v) }
+        });
+      }
+
+      async function pick(create) {
+        try {
+          var opts = { startIn: "desktop", types: [{ description: "Excel workbook", accept: { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"] } }] };
+          var h;
+          if (create) { opts.suggestedName = "Invoice_Register.xlsx"; h = await window.showSaveFilePicker(opts) }
+          else { h = (await window.showOpenFilePicker(opts))[0] }
+          fileHandle = h; await storeHandle(h); setStatus();
+          var EJ = await loadExcelJS();
+          if (create) {
+            var f = await h.getFile();
+            if (f.size === 0) { var wb = buildFresh(EJ); var w = await h.createWritable(); await w.write(await wb.xlsx.writeBuffer()); await w.close() }
+          }
+          /* put every record already logged in this browser into the file */
+          var n = 0;
+          for (var cfg of [CFG.invoice, CFG.quotation]) { var log = readLog(cfg); for (var i = 0; i < log.length; i++) { await writeToHandle(h, EJ, log[i], cfg, false); n++ } }
+          await syncCounterFromFile(h, EJ);
+          var cfgN = cfgNow(), cur = String(S.invNo || "").trim(), fy = fyOf();
+          if (seqOf(cfgN, cur, fy) && !readLog(cfgN).some(function (r) { return String(r.no).toUpperCase() === cur.toUpperCase() })) {
+            var nx = nextNo(cfgN); if (seqOf(cfgN, nx, fy) > seqOf(cfgN, cur, fy)) { S.invNo = nx; persist(); syncForm(); render() }
+          }
+          setMsg("Linked to " + h.name + (n ? " – " + n + " earlier record(s) synced." : "."), false);
+        } catch (e) { if (e && e.name !== "AbortError") setMsg(String(e.message || e), true) }
+      }
+      $("#xlOpen").addEventListener("click", function () { pick(false) });
+      $("#xlNew").addEventListener("click", function () { pick(true) });
+      $("#xlSave").addEventListener("click", async function () { var r = await saveRecord(); setMsg(r.text, !r.ok) });
+      $("#xlDownload").addEventListener("click", async function () {
+        try {
+          var EJ = await loadExcelJS(), wb = buildFresh(EJ), cnt = 0;
+          [CFG.invoice, CFG.quotation].forEach(function (cfg) {
+            var ws = wb.getWorksheet(cfg.sheet);
+            readLog(cfg).forEach(function (rec) { var sc = scanSheet(ws), hit = sc.map[rec.no.toUpperCase()]; if (hit) writeRec(ws, cfg, hit, rec); else writeRec(ws, cfg, sc.last + 1, rec); cnt++ });
+          });
+          wb.calcProperties = { fullCalcOnLoad: true };
+          var blob = new Blob([await wb.xlsx.writeBuffer()], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+          var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "Invoice_Register.xlsx"; document.body.appendChild(a); a.click(); a.remove();
+          setMsg("Downloaded a register containing all " + cnt + " record(s) saved in this browser (invoices and quotations on separate sheets).", false);
+        } catch (e) { setMsg(String(e.message || e), true) }
+      });
+      loadHandle();
+
+      /* numbers are system-generated only: replace blanks and any hand-typed value */
+      if (!isValidNo(cfgNow(), S.invNo)) { S.invNo = nextInvNo(); persist() }
+      applyDocType();
+
       syncForm(); renderItems(); render();
-      window.__invoice = { compute: compute, amountWords: amountWords, state: function () { return S } };
+      window.__invoice = { applyDocType: applyDocType, nextInvNo: nextInvNo, saveRecord: saveRecord, setHandle: function (h) { fileHandle = h }, buildFresh: buildFresh, compute: compute, amountWords: amountWords, state: function () { return S } };
     })();
   </script>
 </body>
