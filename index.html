@@ -85,6 +85,16 @@
       color: #fff
     }
 
+    .btn-ghost.ok {
+      background: #1a7f37
+    }
+
+    @media print {
+      #toast {
+        display: none !important
+      }
+    }
+
     .btn-small {
       padding: 6px 10px;
       font-size: 12.5px;
@@ -643,10 +653,12 @@
 </head>
 
 <body class="tab-edit">
+  <div id="toast" style="position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#17233f;color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;max-width:90vw;z-index:50;display:none;box-shadow:0 6px 24px rgba(0,0,0,.3)"></div>
 
   <div class="topbar">
     <h1>TECH<span>WAVE</span> · Invoice Generator</h1>
     <div class="actions">
+      <button class="btn-ghost" id="xlChip" title="Connect your Excel file once; every bill is then saved to it">📊 Connect Excel</button>
       <button class="btn-ghost" id="btnReset">New invoice</button>
       <button class="btn-primary" id="btnPrint">🖨 Print / Save as PDF</button>
     </div>
@@ -659,18 +671,6 @@
   <div class="layout">
     <!-- ================= FORM ================= -->
     <div class="panel">
-
-      <div class="card" id="xlCard">
-        <h2>Excel register</h2>
-        <p class="hint" id="xlStatus">Not linked. Link your Excel register once; every invoice and quotation you print or save is then added to it automatically.</p>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn-small" id="xlOpen">📂 Open existing register</button>
-          <button class="btn-small" id="xlNew">➕ Create new register</button>
-          <button class="btn-small" id="xlSave" style="background:#fde9dc;color:#a8420a">💾 Save this invoice to Excel</button>
-          <button class="btn-small" id="xlDownload">⬇ Download register</button>
-        </div>
-        <p class="hint" style="margin-top:8px" id="xlMsg"></p>
-      </div>
 
       <details class="card">
         <summary>Your company (saved on this device)</summary>
@@ -705,8 +705,8 @@
           <div><label>Date of Supply</label><input type="date" data-k="supplyDate"></div>
           <div><label>Time of Supply</label><input type="time" data-k="supplyTime"></div>
           <div><label>Vehicle No.</label><input data-k="vehicle"></div>
-          <div><label id="lblDue">Due Date (Excel only)</label><input type="date" data-k="dueDate"></div>
-          <div><label id="lblStatus">Payment Status (Excel only)</label>
+          <div><label id="lblDue">Due Date</label><input type="date" data-k="dueDate"></div>
+          <div><label id="lblStatus">Payment Status</label>
             <select data-k="payStatus"><option value=""></option><option>Unpaid</option><option>Paid</option><option>Partially Paid</option><option>Overdue</option></select>
           </div>
           <div><label>Place of Supply</label><input data-k="placeOfSupply"></div>
@@ -1071,12 +1071,20 @@
       function colL(i) { return String.fromCharCode(64 + i) }
       var fileHandle = null;
 
-      function setMsg(t, bad) { var m = $("#xlMsg"); m.textContent = t || ""; m.style.color = bad ? "#b42318" : "#1a7f37" }
-      function setStatus() {
-        $("#xlStatus").textContent = fileHandle ? "Linked to: " + fileHandle.name + " — invoices and quotations are added to this file automatically (separate sheets)." : "Not linked. Link your Excel register once; every invoice and quotation you print or save is then added to it automatically.";
+      var toastT = null;
+      function setMsg(t, bad) {
+        var m = $("#toast"); if (!t) { m.style.display = "none"; return }
+        m.textContent = t; m.style.background = bad ? "#b42318" : "#17233f"; m.style.display = "block";
+        clearTimeout(toastT); toastT = setTimeout(function () { m.style.display = "none" }, bad ? 9000 : 4500);
       }
       var hasFS = !!(window.showOpenFilePicker && window.showSaveFilePicker);
-      if (!hasFS) { $("#xlOpen").style.display = "none"; $("#xlNew").style.display = "none"; $("#xlStatus").textContent = "This browser cannot write to a file directly (use Chrome or Edge on a computer). Records are still kept in this browser; use “Download register” to get the Excel file." }
+      function setStatus() {
+        var c = $("#xlChip");
+        if (!hasFS) { c.textContent = "⬇ Download Excel"; c.title = "This browser cannot save straight to a file. Records are kept here; tap to download them as one Excel file."; c.classList.remove("ok"); return }
+        if (fileHandle) { c.textContent = "📊 Excel connected ✓"; c.title = "Connected to " + fileHandle.name + ". Click to choose a different file."; c.classList.add("ok") }
+        else { c.textContent = "📊 Connect Excel"; c.title = "Connect your Excel file once; every bill is then saved to it"; c.classList.remove("ok") }
+      }
+      setStatus();
 
       /* --- remember the linked file between visits (IndexedDB) --- */
       function idb(mode, fn) {
@@ -1125,9 +1133,8 @@
       function applyDocType() {
         var q = S.docType === "quotation", cfg = cfgNow();
         $("#lblNo").textContent = q ? "Quotation Number (auto)" : "Serial Number Invoice (auto)";
-        $("#lblDue").textContent = q ? "Valid Until (Excel only)" : "Due Date (Excel only)";
-        $("#lblStatus").textContent = q ? "Quotation Status (Excel only)" : "Payment Status (Excel only)";
-        $("#xlSave").textContent = q ? "💾 Save this quotation to Excel" : "💾 Save this invoice to Excel";
+        $("#lblDue").textContent = q ? "Valid Until" : "Due Date";
+        $("#lblStatus").textContent = q ? "Quotation Status" : "Payment Status";
         var sel = $("[data-k=payStatus]"), list = [""].concat(cfg.statusList);
         if (list.indexOf(S.payStatus) < 0) S.payStatus = "";
         sel.innerHTML = list.map(function (o) { return '<option value="' + o + '">' + o + "</option>" }).join("");
@@ -1293,7 +1300,7 @@
         if (!rec.no) return { ok: false, reason: "nonumber", text: "The " + word.toLowerCase() + " number is empty – it is the unique key of each Excel record." };
         if (!fileHandle) {
           var was = upsertLog(cfg, rec); bumpCounter(cfg, rec.no); S.recNo = rec.no; persist();
-          return { ok: true, text: word + " " + (was ? "updated" : "saved") + " in this browser's register. Link an Excel file to write it to Excel too." };
+          return { ok: true, text: word + " " + (was ? "updated" : "saved") + " saved on this device. Tap “Connect Excel” (top) once to save it to your Excel file too." };
         }
         try {
           if (!(await ensurePerm(fileHandle))) return { ok: false, reason: "perm", text: "Permission to edit the Excel file was not given." };
@@ -1310,6 +1317,9 @@
       }
 
       async function recordAndPrint() {
+        /* first time only: ask for the Excel file (needs this click, so it is done before anything else) */
+        var skip = false; try { skip = sessionStorage.getItem("xlSkip") === "1" } catch (e) { }
+        if (!fileHandle && hasFS && !skip) { await pick(); if (!fileHandle) { try { sessionStorage.setItem("xlSkip", "1") } catch (e) { } } }
         var r = await saveRecord();
         setMsg(r.text, !r.ok);
         if (!r.ok) {
@@ -1328,7 +1338,8 @@
         });
       }
 
-      async function pick(create) {
+      async function pick() {
+          var create = true;
         try {
           var opts = { startIn: "desktop", types: [{ description: "Excel workbook", accept: { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"] } }] };
           var h;
@@ -1351,10 +1362,7 @@
           setMsg("Linked to " + h.name + (n ? " – " + n + " earlier record(s) synced." : "."), false);
         } catch (e) { if (e && e.name !== "AbortError") setMsg(String(e.message || e), true) }
       }
-      $("#xlOpen").addEventListener("click", function () { pick(false) });
-      $("#xlNew").addEventListener("click", function () { pick(true) });
-      $("#xlSave").addEventListener("click", async function () { var r = await saveRecord(); setMsg(r.text, !r.ok) });
-      $("#xlDownload").addEventListener("click", async function () {
+      async function downloadRegister() {
         try {
           var EJ = await loadExcelJS(), wb = buildFresh(EJ), cnt = 0;
           [CFG.invoice, CFG.quotation].forEach(function (cfg) {
@@ -1364,8 +1372,13 @@
           wb.calcProperties = { fullCalcOnLoad: true };
           var blob = new Blob([await wb.xlsx.writeBuffer()], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
           var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "Invoice_Register.xlsx"; document.body.appendChild(a); a.click(); a.remove();
-          setMsg("Downloaded a register containing all " + cnt + " record(s) saved in this browser (invoices and quotations on separate sheets).", false);
+          setMsg("Downloaded Invoice_Register.xlsx with all " + cnt + " record(s) saved on this device.", false);
         } catch (e) { setMsg(String(e.message || e), true) }
+      }
+      $("#xlChip").addEventListener("click", function () {
+        if (!hasFS) { downloadRegister(); return }
+        if (fileHandle && !confirm("Connected to " + fileHandle.name + ".\nChoose a different Excel file?")) return;
+        pick();
       });
       loadHandle();
 
