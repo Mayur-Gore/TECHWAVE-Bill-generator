@@ -449,7 +449,7 @@
       border-collapse: collapse;
       table-layout: auto;
       border: 1px solid #333;
-      font-size: 7.5pt
+      font-size: 9pt
     }
 
     table.items th,
@@ -603,6 +603,293 @@
       border-radius: 2px
     }
 
+
+    /* ---------- Quotation layout ---------- */
+    .q-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      padding-bottom: 8px;
+      border-bottom: 2.5px solid var(--navy);
+      position: relative
+    }
+
+    .q-head::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: -5px;
+      width: 38%;
+      height: 2px;
+      background: var(--orange)
+    }
+
+    .q-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    .q-brand svg {
+      width: 96px;
+      height: 56px;
+      flex: none
+    }
+
+    .q-name {
+      font-weight: 900;
+      font-size: 24pt;
+      letter-spacing: .5px;
+      line-height: 1;
+      color: var(--navy)
+    }
+
+    .q-name b {
+      color: var(--blue)
+    }
+
+    .q-sub {
+      font-weight: 700;
+      letter-spacing: 5px;
+      font-size: 9.5pt;
+      color: var(--navy);
+      margin-top: 3px
+    }
+
+    .q-slogan {
+      font-size: 7.5pt;
+      letter-spacing: 2px;
+      color: var(--orange);
+      font-weight: 700;
+      margin-top: 3px
+    }
+
+    .q-title span {
+      display: inline-block;
+      background: var(--orange);
+      color: #fff;
+      font-size: 22pt;
+      letter-spacing: 3px;
+      padding: 2px 20px;
+      border-radius: 3px;
+      font-weight: 600;
+      text-transform: uppercase
+    }
+
+    .q-top {
+      display: grid;
+      grid-template-columns: 1fr 76mm;
+      gap: 10mm;
+      margin-top: 5mm;
+      font-size: 9pt;
+      line-height: 1.45
+    }
+
+    .q-lbl {
+      font-weight: 800;
+      color: var(--navy);
+      text-transform: uppercase;
+      margin-top: 2mm
+    }
+
+    .q-lbl:first-child {
+      margin-top: 0
+    }
+
+    .q-pre {
+      white-space: pre-line
+    }
+
+    table.q-meta {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9.5pt
+    }
+
+    table.q-meta td {
+      border: 1px solid #333;
+      padding: 3px 7px
+    }
+
+    table.q-meta td:first-child {
+      text-align: right;
+      font-weight: 800;
+      color: var(--navy);
+      width: 44%
+    }
+
+    table.q-meta td:last-child {
+      text-align: center
+    }
+
+    .q-by {
+      margin: 4mm 0 3mm;
+      font-size: 9pt
+    }
+
+    .q-by span {
+      display: inline-block;
+      min-width: 100mm;
+      border-bottom: 1px dotted #666;
+      padding: 0 4px;
+      font-weight: 700
+    }
+
+    table.qitems {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      border: 1px solid #333;
+      font-size: 11.5pt
+    }
+
+    table.qitems thead {
+      display: table-header-group
+    }
+
+    table.qitems th {
+      background: #eaf0fd;
+      color: var(--navy);
+      border: 1px solid #333;
+      padding: 6px 6px;
+      font-size: 10.5pt;
+      letter-spacing: .4px;
+      text-transform: uppercase
+    }
+
+    table.qitems td {
+      border-left: 1px solid #333;
+      border-right: 1px solid #333;
+      padding: 6px 7px;
+      vertical-align: top;
+      overflow-wrap: anywhere
+    }
+
+    table.qitems td b {
+      font-size: 12.5pt
+    }
+
+    table.qitems tbody tr {
+      break-inside: avoid;
+      page-break-inside: avoid
+    }
+
+    table.qitems td.n {
+      text-align: right;
+      white-space: nowrap
+    }
+
+    table.qitems td.c {
+      text-align: center
+    }
+
+    table.qitems tr.last td {
+      border-bottom: 1px solid #333
+    }
+
+    .q-hsn {
+      font-size: 9pt;
+      color: #555
+    }
+
+    .q-bottom {
+      display: grid;
+      grid-template-columns: 1fr 78mm;
+      gap: 8mm;
+      margin-top: 0;
+      break-inside: avoid;
+      page-break-inside: avoid
+    }
+
+    .q-left {
+      padding-top: 3mm;
+      font-size: 8pt;
+      line-height: 1.35
+    }
+
+    .q-left .q-lbl {
+      margin-top: 0
+    }
+
+    .q-words {
+      font-weight: 700;
+      margin-bottom: 3mm
+    }
+
+    .q-tot div {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      border: 1px solid #333;
+      border-top: 0;
+      padding: 4px 8px;
+      font-size: 9.5pt
+    }
+
+    .q-tot div span:first-child {
+      font-weight: 800;
+      color: var(--navy);
+      text-transform: uppercase
+    }
+
+    .q-tot div:last-child {
+      background: #eaf0fd;
+      font-size: 11pt
+    }
+
+    .q-foot {
+      break-inside: avoid;
+      page-break-inside: avoid;
+      font-size: 9pt;
+      margin-top: 4mm
+    }
+
+    .q-accept {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 10mm
+    }
+
+    .q-accept .ln {
+      flex: 1;
+      border-bottom: 1px dashed #555;
+      min-width: 50mm;
+      margin: 0 3mm;
+      height: 8mm
+    }
+
+    .q-acceptl {
+      display: flex;
+      align-items: flex-end;
+      flex: 1;
+      white-space: nowrap
+    }
+
+    .q-sig {
+      text-align: right;
+      min-width: 55mm
+    }
+
+    .q-sig div:first-child {
+      margin-bottom: 7mm
+    }
+
+    .q-contact {
+      text-align: center;
+      margin-top: 4mm;
+      color: #333
+    }
+
+    .q-thanks {
+      text-align: center;
+      margin-top: 3mm;
+      font-weight: 800;
+      letter-spacing: .5px;
+      color: var(--navy)
+    }
+
     /* ---------- Print ---------- */
     @media print {
 
@@ -705,6 +992,10 @@
           <div><label>Date of Supply</label><input type="date" data-k="supplyDate"></div>
           <div><label>Time of Supply</label><input type="time" data-k="supplyTime"></div>
           <div><label>Vehicle No.</label><input data-k="vehicle"></div>
+          <div class="full" id="gstWrap" style="display:none"><label>GST on this quotation</label>
+            <select data-k="gstOpt" style="font-weight:700"><option value="with">With GST</option><option value="without">Without GST</option></select>
+          </div>
+          <div class="full" id="prepWrap" style="display:none"><label>Quotation prepared by</label><input data-k="preparedBy" placeholder="Name of the person preparing this quotation"></div>
           <div><label id="lblDue">Due Date</label><input type="date" data-k="dueDate"></div>
           <div><label id="lblStatus">Payment Status</label>
             <select data-k="payStatus"><option value=""></option><option>Unpaid</option><option>Paid</option><option>Partially Paid</option><option>Overdue</option></select>
@@ -792,14 +1083,14 @@
 
       var COMPANY_KEYS = ["coAddress", "coPhone", "coEmail", "coGstin", "coState", "coStateCode", "bank"];
 
-      function blankItem() { return { desc: "", hsn: "", qty: 1, unit: "Nos.", rate: 0, disc: 0, gst: 18 } }
+      function blankItem() { return { name: "", desc: "", hsn: "", qty: 1, unit: "Nos.", rate: 0, disc: 0, gst: 18 } }
       function defaults() {
         return {
           coAddress: "Fourth Floor Ten No.1, LIG 20, Navi Mumbai, - 400706", coPhone: "9975589895, 9823158790", coEmail: "techwave8790@gmail.com", coGstin: "27AAFPY8345R1ZJ", coState: "Maharashtra", coStateCode: "27", bank: "A/c No.: 4168976430",
           invNo: "", transport: "", poNo: "", poDate: "", supplyDate: today(), supplyTime: "17:00", vehicle: "", placeOfSupply: "",
           bName: "", bAddress: "", bState: "Maharashtra", bStateCode: "27", bGstin: RECEIVER_GSTIN,
           same: true, cName: "", cAddress: "", cState: "", cStateCode: "", cGstin: "27AAFPY8345R1ZJ",
-          docType: "invoice", recNo: "", dueDate: "", payStatus: "", taxMode: "auto", freight: 0, roundMode: "auto", orientation: "portrait",
+          docType: "invoice", gstOpt: "with", preparedBy: "", recNo: "", dueDate: "", payStatus: "", taxMode: "auto", freight: 0, roundMode: "auto", orientation: "portrait",
           terms: "Terms & Conditions:\n1. Prices are in Indian Rupees and GST is shown separately above.\n2. Delivery: Within 5–7 working days from confirmed purchase order, subject to stock availability.\n3. Payment: 100% within 15 days from delivery / invoice date.\n4. Warranty: As per respective manufacturer's standard warranty, where applicable.\n\nWe trust you will find our offer most competitive and request you favor us with your valued purchase / work order.\nWe are always at your service and thanking you in the meanwhile, we remain.\n\nThanking you,",
           items: [blankItem()]
         };
@@ -865,7 +1156,7 @@
       function compute() {
         var type = taxType(), rows = [], sum = { total: 0, disc: 0, taxable: 0, cgst: 0, sgst: 0, igst: 0, net: 0 };
         S.items.forEach(function (it) {
-          var qty = num(it.qty), rate = num(it.rate), gst = num(it.gst);
+          var qty = num(it.qty), rate = num(it.rate), gst = (S.docType === "quotation" && S.gstOpt === "without") ? 0 : num(it.gst);
           var total = r2(qty * rate), disc = Math.min(Math.max(num(it.disc), 0), total), taxable = r2(total - disc);
           var row = { it: it, qty: qty, rate: rate, total: total, disc: disc, taxable: taxable, gst: gst, cr: 0, ca: 0, sr: 0, sa: 0, ir: 0, ia: 0 };
           if (type === "intra") { row.cr = row.sr = gst / 2; row.ca = r2(taxable * gst / 200); row.sa = r2(taxable * gst / 200) }
@@ -893,6 +1184,7 @@
       function render() {
         var c = compute(), cons = consigneeOf(), landscape = S.orientation === "landscape";
         var h = "";
+        if (S.docType === "quotation") { commitSheet(quoteHtml(c, cons), landscape); return }
         h += '<div class="inv-head"><div class="brand">' + LOGO + '<div><div class="name">TECH<b>WAVE</b></div><div class="sub">ENTERPRISES</div><div class="tag">POWERING YOUR INDUSTRY</div></div></div>';
         h += '<div class="contact">' + (S.coAddress ? '<div class="addr">' + esc(S.coAddress) + '</div>' : '') +
           (S.coPhone ? '<div><b>Mobile:</b> ' + esc(S.coPhone) + '</div>' : '') + (S.coEmail ? '<div><b>Email:</b> ' + esc(S.coEmail) + '</div>' : '') +
@@ -917,22 +1209,22 @@
 
         var isQ = S.docType === "quotation";
         h += '<table class="items">' +
-          '<thead><tr><th rowspan="2" class="wrap">S. No</th><th rowspan="2" class="wrap" style="min-width:28mm">Description of Goods</th><th rowspan="2" class="wrap">HSN Code</th><th rowspan="2">Qty.</th><th rowspan="2">Unit</th><th rowspan="2">Rate</th><th rowspan="2">Total</th><th rowspan="2">Discount</th><th rowspan="2" class="wrap">Taxable Value</th>' + (isQ ? "" : '<th colspan="2">CGST</th><th colspan="2">SGST</th>') + '<th colspan="2">IGST</th><th rowspan="2" class="wrap">Total Amount</th></tr>' +
-          '<tr>' + (isQ ? "" : "<th>Rate</th><th>Amount</th><th>Rate</th><th>Amount</th>") + '<th>Rate</th><th>Amount</th></tr></thead><tbody>';
+          '<thead><tr><th rowspan="2" class="wrap">S. No</th><th rowspan="2" class="wrap" style="min-width:28mm">Description of Goods</th><th rowspan="2" class="wrap">HSN Code</th><th rowspan="2">Qty.</th><th rowspan="2">Unit</th><th rowspan="2">Rate</th><th rowspan="2">Total</th><th rowspan="2">Discount</th><th rowspan="2" class="wrap">Taxable Value</th>' + (c.type === "intra" ? '<th colspan="2">CGST</th><th colspan="2">SGST</th>' : '<th colspan="2">IGST</th>') + '<th rowspan="2" class="wrap">Total Amount</th></tr>' +
+          '<tr>' + (c.type === "intra" ? "<th>Rate</th><th>Amount</th><th>Rate</th><th>Amount</th>" : "<th>Rate</th><th>Amount</th>") + '</tr></thead><tbody>';
         c.rows.forEach(function (r, i) {
           var intra = c.type === "intra";
           h += '<tr><td class="c">' + (i + 1) + '</td><td class="desc">' + esc(r.it.desc) + '</td><td class="c">' + esc(r.it.hsn) + '</td>' +
             '<td class="c">' + esc(r.qty) + '</td><td class="c">' + esc(r.it.unit) + '</td><td class="n">' + money(r.rate) + '</td><td class="n">' + money(r.total) + '</td>' +
             '<td class="n">' + (r.disc ? money(r.disc) : "") + '</td><td class="n">' + money(r.taxable) + '</td>' +
-            (isQ ? "" : '<td class="c">' + (intra ? pct(r.cr) : "") + '</td><td class="n">' + (intra ? money(r.ca) : "") + '</td>' +
-            '<td class="c">' + (intra ? pct(r.sr) : "") + '</td><td class="n">' + (intra ? money(r.sa) : "") + '</td>') +
-            '<td class="c">' + (!intra ? pct(r.ir) : "") + '</td><td class="n">' + (!intra ? money(r.ia) : "") + '</td>' +
+            (intra ? '<td class="c">' + pct(r.cr) + '</td><td class="n">' + money(r.ca) + '</td><td class="c">' + pct(r.sr) + '</td><td class="n">' + money(r.sa) + '</td>'
+              : '<td class="c">' + pct(r.ir) + '</td><td class="n">' + money(r.ia) + '</td>') +
             '<td class="n"><b>' + money(r.net) + '</b></td></tr>';
         });
         var fillMm = Math.max(0, 8 - c.rows.length) * 9;
-        if (fillMm) { h += '<tr class="fill" style="height:' + fillMm + 'mm">' + new Array(isQ ? 13 : 17).join("<td></td>") + '</tr>' }
+        if (fillMm) { h += '<tr class="fill" style="height:' + fillMm + 'mm">' + new Array(c.type === "intra" ? 15 : 13).join("<td></td>") + '</tr>' }
         h += '<tr style="font-weight:700;background:#f5f8ff"><td colspan="6" class="n" style="border-top:1px solid #333">Sub-total</td><td class="n" style="border-top:1px solid #333">' + money(c.sum.total) + '</td><td class="n" style="border-top:1px solid #333">' + (c.sum.disc ? money(c.sum.disc) : "") + '</td><td class="n" style="border-top:1px solid #333">' + money(c.sum.taxable) + '</td>' +
-          (isQ ? "" : '<td style="border-top:1px solid #333"></td><td class="n" style="border-top:1px solid #333">' + (c.type === "intra" ? money(c.sum.cgst) : "") + '</td><td style="border-top:1px solid #333"></td><td class="n" style="border-top:1px solid #333">' + (c.type === "intra" ? money(c.sum.sgst) : "") + '</td>') + '<td style="border-top:1px solid #333"></td><td class="n" style="border-top:1px solid #333">' + (c.type === "inter" ? money(c.sum.igst) : "") + '</td><td class="n" style="border-top:1px solid #333">' + money(c.sum.net) + '</td></tr>';
+          (c.type === "intra" ? '<td style="border-top:1px solid #333"></td><td class="n" style="border-top:1px solid #333">' + money(c.sum.cgst) + '</td><td style="border-top:1px solid #333"></td><td class="n" style="border-top:1px solid #333">' + money(c.sum.sgst) + '</td>'
+            : '<td style="border-top:1px solid #333"></td><td class="n" style="border-top:1px solid #333">' + money(c.sum.igst) + '</td>') + '<td class="n" style="border-top:1px solid #333">' + money(c.sum.net) + '</td></tr>';
         h += '</tbody></table>';
 
         h += '<div class="bottom"><div class="row"><div class="left"><div><b>INVOICE TOTAL (In Words)</b></div><div class="words">' + esc(amountWords(c.grand)) + '</div>' +
@@ -942,6 +1234,10 @@
           '<div class="sign"><div>Received the goods in good condition.<br><br>Receiver\'s signature</div><div class="r"><div>For <b>Techwave Enterprises</b></div><div>Authorized Signatory</div></div></div></div>';
         h += '<div class="foot">Your Trusted Partner in Industrial Electrical Solutions</div>';
 
+        commitSheet(h, landscape);
+      }
+
+      function commitSheet(h, landscape) {
         var sh = $("#sheet");
         sh.innerHTML = h;
         sh.classList.toggle("landscape", landscape);
@@ -951,12 +1247,62 @@
         fitPreview();
       }
 
+      /* ---------- quotation page (template layout: Items · Specification · Unit price · Quantity · Amount) ---------- */
+      function quoteHtml(c, cons) {
+        var h = "", rates = [];
+        h += '<div class="q-head"><div class="q-brand">' + LOGO + '<div><div class="q-name">TECH<b>WAVE</b></div><div class="q-sub">ENTERPRISES</div><div class="q-slogan">POWERING YOUR INDUSTRY</div></div></div>' +
+          '<div class="q-title"><span>Quotation</span></div></div>';
+        var meta = '<tr><td>DATE :</td><td>' + esc(dmy(S.supplyDate)) + '</td></tr><tr><td>Quote No:</td><td>' + esc(S.invNo) + '</td></tr><tr><td>Expiration Date:</td><td>' + esc(dmy(S.dueDate)) + '</td></tr>' +
+          (S.poNo || S.poDate ? '<tr><td>P.O. No.:</td><td>' + esc(S.poNo) + (S.poDate ? (S.poNo ? " " : "") + dmy(S.poDate) : "") + '</td></tr>' : '') +
+          (S.placeOfSupply ? '<tr><td>Place of Supply:</td><td>' + esc(S.placeOfSupply) + '</td></tr>' : '');
+        function who(p) {
+          return '<div><b>' + esc(p.name) + '</b></div>' + (p.addr ? '<div class="q-pre">' + esc(p.addr) + '</div>' : '') +
+            ((p.state || p.code) ? '<div>' + esc(p.state) + (p.code ? ' (State Code: ' + esc(p.code) + ')' : '') + '</div>' : '') + (p.gstin ? '<div>GSTIN: ' + esc(p.gstin) + '</div>' : '');
+        }
+        h += '<div class="q-top"><div>' +
+          '<div class="q-lbl">Address:</div><div><b>Techwave Enterprises</b></div>' + (S.coAddress ? '<div class="q-pre">' + esc(S.coAddress) + '</div>' : '') +
+          (S.coPhone ? '<div>Mobile: ' + esc(S.coPhone) + '</div>' : '') + (S.coEmail ? '<div>Email: ' + esc(S.coEmail) + '</div>' : '') +
+          (S.coGstin ? '<div>GSTIN: ' + esc(S.coGstin) + ((S.coState || S.coStateCode) ? ' &nbsp;|&nbsp; ' + esc(S.coState) + (S.coStateCode ? ' (Code: ' + esc(S.coStateCode) + ')' : '') : '') + '</div>' : '') +
+          '<div class="q-lbl" style="margin-top:3mm">To :</div>' + who({ name: S.bName, addr: S.bAddress, state: S.bState, code: S.bStateCode, gstin: S.bGstin }) +
+          '</div><div><table class="q-meta">' + meta + '</table>' +
+          (S.same ? '' : '<div class="q-lbl" style="margin-top:5mm">Ship To :</div>' + who(cons)) + '</div></div>';
+        h += '<div class="q-by">Quotation prepared by : <span>' + esc(S.preparedBy) + '</span></div>';
+        h += '<table class="qitems"><colgroup><col style="width:7%"><col style="width:43%"><col style="width:17%"><col style="width:15%"><col style="width:18%"></colgroup>' +
+          '<thead><tr><th>S. No</th><th>Items</th><th>Unit Price</th><th>Quantity</th><th>Amount</th></tr></thead><tbody>';
+        c.rows.forEach(function (r, i) {
+          if (r.gst && rates.indexOf(r.gst) < 0) rates.push(r.gst);
+          h += '<tr><td class="c">' + (i + 1) + '</td><td>' + (r.it.name ? '<b>' + esc(r.it.name) + '</b>' : '') + (r.it.desc ? '<div class="q-pre">' + esc(r.it.desc) + '</div>' : '') + (r.it.hsn ? '<div class="q-hsn">HSN: ' + esc(r.it.hsn) + '</div>' : '') + '</td>' +
+            '<td class="n">' + money(r.rate) + '</td><td class="c">' + esc(r.qty) + ' ' + esc(r.it.unit) + '</td><td class="n">' + money(r.total) + '</td></tr>';
+        });
+        var fillMm = Math.max(0, 5 - c.rows.length) * 8;
+        h += '<tr class="last" style="height:' + Math.max(fillMm, 2) + 'mm"><td></td><td></td><td></td><td></td><td></td></tr></tbody></table>';
+        var gstLabel = rates.length ? "GST " + rates.map(function (x) { return (Math.round(x * 100) / 100) + "%" }).join(" / ") : "GST";
+        var noGst = S.gstOpt === "without";
+        var terms = String(S.terms || "").replace(/^\s*terms\s*(&|and)\s*conditions\s*:?\s*\n?/i, "");
+        if (noGst) terms = terms.replace(/GST is shown separately above\./i, "GST is not included.");
+        h += '<div class="q-bottom"><div class="q-left"><div class="q-lbl">Grand total (in words)</div><div class="q-words">' + esc(amountWords(c.grand)) + '</div>' +
+          (terms ? '<div class="q-lbl">Terms and Conditions :</div><div class="q-pre">' + esc(terms) + '</div>' : '') +
+          (S.bank ? '<div class="q-lbl" style="margin-top:3mm">Bank details</div><div class="q-pre">' + esc(S.bank) + '</div>' : '') + '</div>' +
+          '<div class="q-tot"><div><span>Sub Total</span><span>₹ ' + money(c.sum.total) + '</span></div>' +
+          (c.sum.disc ? '<div><span>Discount</span><span>− ₹ ' + money(c.sum.disc) + '</span></div>' : '') +
+          (noGst ? '' : '<div><span>' + gstLabel + '</span><span>₹ ' + money(c.sum.igst) + '</span></div>') +
+          (c.freight ? '<div><span>Freight</span><span>₹ ' + money(c.freight) + '</span></div>' : '') +
+          (c.round ? '<div><span>Round Off</span><span>' + (c.round > 0 ? "+" : "−") + ' ₹ ' + money(Math.abs(c.round)) + '</span></div>' : '') +
+          '<div><span>Grand Total</span><span>₹ ' + money(c.grand) + '</span></div></div></div>';
+        h += '<div class="q-foot"><div class="q-accept"><div class="q-acceptl">To accept this quotation, please sign here and return :<span class="ln"></span></div>' +
+          '<div class="q-sig"><div>For <b>Techwave Enterprises</b></div><div>Authorized Signatory</div></div></div>' +
+          '<div class="q-contact">If you have any questions about this quotation, please contact<br><b>Techwave Enterprises</b>' + (S.coPhone ? ' , PH : ' + esc(S.coPhone) : '') + (S.coEmail ? ' , ' + esc(S.coEmail) : '') + '</div>' +
+          '<div class="q-thanks">THANK YOU FOR YOUR BUSINESS!</div></div>';
+        h += '<div class="foot">Your Trusted Partner in Industrial Electrical Solutions</div>';
+        return h;
+      }
+
       /* shrink the table font until every column fits the page width (descriptions wrap, numbers never overflow) */
       function fitTable() {
         var sh = $("#sheet"), t = $("table.items");
         if (!t) return;
         var cs = getComputedStyle(sh), avail = sh.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-        var fs = 7.5;
+        var fs = 9;
         t.style.fontSize = fs + "pt";
         while (fs > 4.5 && t.offsetWidth > avail + 0.5) { fs -= 0.25; t.style.fontSize = fs + "pt" }
       }
@@ -978,7 +1324,8 @@
         S.items.forEach(function (it, i) {
           var d = document.createElement("div"); d.className = "item";
           d.innerHTML = '<div class="item-head"><span>Item ' + (i + 1) + '</span>' + (S.items.length > 1 ? '<button class="btn-small btn-danger" data-del="' + i + '">Remove</button>' : '') + '</div>' +
-            '<div style="margin-bottom:8px"><label>Description of goods</label><textarea data-i="' + i + '" data-f="desc" rows="2">' + esc(it.desc) + '</textarea></div>' +
+            (S.docType === "quotation" ? '<div style="margin-bottom:8px"><label>Item (shown in ITEMS column)</label><input data-i="' + i + '" data-f="name" value="' + esc(it.name) + '"></div>' : '') +
+            '<div style="margin-bottom:8px"><label>' + (S.docType === "quotation" ? "Details (shown under the item name)" : "Description of goods") + '</label><textarea data-i="' + i + '" data-f="desc" rows="2">' + esc(it.desc) + '</textarea></div>' +
             '<div class="grid3">' +
             '<div><label>HSN Code</label><input data-i="' + i + '" data-f="hsn" value="' + esc(it.hsn) + '"></div>' +
             '<div><label>Qty.</label><input type="number" min="0" step="any" data-i="' + i + '" data-f="qty" value="' + esc(it.qty) + '"></div>' +
@@ -1132,6 +1479,7 @@
       /* --- form labels that depend on the document type --- */
       function applyDocType() {
         var q = S.docType === "quotation", cfg = cfgNow();
+        $("#prepWrap").style.display = q ? "" : "none"; $("#gstWrap").style.display = q ? "" : "none";
         $("#lblNo").textContent = q ? "Quotation Number (auto)" : "Serial Number Invoice (auto)";
         $("#lblDue").textContent = q ? "Valid Until" : "Due Date";
         $("#lblStatus").textContent = q ? "Quotation Status" : "Payment Status";
@@ -1140,7 +1488,7 @@
         sel.innerHTML = list.map(function (o) { return '<option value="' + o + '">' + o + "</option>" }).join("");
         sel.value = S.payStatus;
       }
-      function onDocType() { S.invNo = nextInvNo(); S.payStatus = ""; S.recNo = ""; applyDocType(); syncForm(); persist() }
+      function onDocType() { S.invNo = nextInvNo(); S.payStatus = ""; S.recNo = ""; applyDocType(); syncForm(); renderItems(); persist() }
 
       function recordOf(cfg) {
         var c = compute(), rem = [], q = cfg.type === "quotation";
