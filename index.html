@@ -449,7 +449,16 @@
       border-collapse: collapse;
       table-layout: auto;
       border: 1px solid #333;
-      font-size: 9pt
+      font-size: 11pt
+    }
+
+    .sheet.landscape table.items tr.fill {
+      height: 12mm !important
+    }
+
+    .uv {
+      font-size: 10.5pt;
+      font-weight: 600
     }
 
     table.items th,
@@ -470,7 +479,7 @@
 
     table.items thead th {
       white-space: nowrap;
-      font-size: .93em;
+      font-size: 8.5pt;
       padding: 3px 3px
     }
 
@@ -1016,7 +1025,7 @@
         </div>
       </div>
 
-      <div class="card">
+      <div class="card" id="consCard">
         <h2>Consignee (Shipped To)</h2>
         <div class="check"><input type="checkbox" id="same" data-k="same"><label for="same">Same as Receiver</label>
         </div>
@@ -1055,7 +1064,7 @@
           <div class="full"><label>Terms &amp; conditions</label><textarea data-k="terms" rows="3"></textarea></div>
           <div class="full"><label>Page orientation</label>
             <select data-k="orientation">
-              <option value="portrait">A4 Portrait</option>
+              <option value="portrait">A4 Portrait (switches to landscape automatically if the table needs more width)</option>
               <option value="landscape">A4 Landscape (more room for columns)</option>
             </select>
           </div>
@@ -1193,36 +1202,37 @@
         document.title = (S.docType === "quotation" ? "Quotation" : "Tax Invoice") + (S.invNo ? " " + S.invNo.replace(/[\\/:*?"<>|]+/g, "-") : "") + " - Techwave Enterprises";
 
         h += '<div class="meta">' +
-          '<div><b>GSTIN:</b> ' + '27AAFPY8345R1ZJ' + '</div><div><b>Mode of Transport:</b> ' + esc(S.transport) + '</div>' +
-          '<div><b>Serial Number Invoice:</b> ' + esc(S.invNo) + '</div><div><b>Vehicle No:</b> ' + esc(S.vehicle) + '</div>' +
-          '<div><b>P.O. No. &amp; Date:</b> ' + esc(S.poNo) + (S.poDate ? (S.poNo ? " " : "") + dmy(S.poDate) : "") + '</div>' +
-          '<div><b>Date &amp; Time of Supply:</b> ' + esc(dmy(S.supplyDate)) + (S.supplyTime ? " &amp; " + esc(t12(S.supplyTime)) : "") + '</div>' +
-          '<div><b>State / Code:</b> ' + esc(S.coState) + ' / ' + esc(S.coStateCode) + '</div><div><b>Place of Supply:</b> ' + esc(S.placeOfSupply) + '</div>' +
+          '<div><b>GSTIN:</b> ' + '27AAFPY8345R1ZJ' + '</div><div><b>Mode of Transport:</b> ' + uv(S.transport) + '</div>' +
+          '<div><b>Serial Number Invoice:</b> ' + uv(S.invNo) + '</div><div><b>Vehicle No:</b> ' + uv(S.vehicle) + '</div>' +
+          '<div><b>P.O. No. &amp; Date:</b> ' + uv(S.poNo + (S.poDate ? (S.poNo ? " " : "") + dmy(S.poDate) : "")) + '</div>' +
+          '<div><b>Date &amp; Time of Supply:</b> ' + uv(dmy(S.supplyDate) + (S.supplyTime ? " & " + t12(S.supplyTime) : "")) + '</div>' +
+          '<div><b>State / Code:</b> ' + esc(S.coState) + ' / ' + esc(S.coStateCode) + '</div><div><b>Place of Supply:</b> ' + uv(S.placeOfSupply) + '</div>' +
           '</div>';
 
+        function uv(v) { return '<span class="uv">' + esc(v) + '</span>' }
         function party(title, p) {
-          return '<div><h4>' + title + '</h4><div class="line"><b>Name:</b> ' + esc(p.name) + '</div><div class="line"><b>Address:</b> ' + esc(p.addr) + '</div>' +
-            '<div><b>State:</b> ' + esc(p.state) + ' &nbsp; <b>State Code:</b> ' + esc(p.code) + '</div><div><b>GSTIN/Unique ID:</b> ' + esc(p.gstin) + '</div></div>';
+          return '<div><h4>' + title + '</h4><div class="line"><b>Name:</b> ' + uv(p.name) + '</div><div class="line"><b>Address:</b> ' + uv(p.addr) + '</div>' +
+            '<div><b>State:</b> ' + uv(p.state) + ' &nbsp; <b>State Code:</b> ' + uv(p.code) + '</div><div><b>GSTIN/Unique ID:</b> ' + uv(p.gstin) + '</div></div>';
         }
         h += '<div class="parties">' + party("Details of Receiver (Billed To)", { name: S.bName, addr: S.bAddress, state: S.bState, code: S.bStateCode, gstin: S.bGstin }) +
           party("Details of Consignee (Shipped To)", cons) + '</div>';
 
-        var isQ = S.docType === "quotation";
+        var hasDisc = c.sum.disc > 0; /* Total and Discount columns appear only when a discount is given (otherwise Total = Taxable Value), which leaves room for larger text */
         h += '<table class="items">' +
-          '<thead><tr><th rowspan="2" class="wrap">S. No</th><th rowspan="2" class="wrap" style="min-width:28mm">Description of Goods</th><th rowspan="2" class="wrap">HSN Code</th><th rowspan="2">Qty.</th><th rowspan="2">Unit</th><th rowspan="2">Rate</th><th rowspan="2">Total</th><th rowspan="2">Discount</th><th rowspan="2" class="wrap">Taxable Value</th>' + (c.type === "intra" ? '<th colspan="2">CGST</th><th colspan="2">SGST</th>' : '<th colspan="2">IGST</th>') + '<th rowspan="2" class="wrap">Total Amount</th></tr>' +
+          '<thead><tr><th rowspan="2" class="wrap">S. No</th><th rowspan="2" class="wrap" style="min-width:28mm">Description of Goods</th><th rowspan="2" class="wrap">HSN Code</th><th rowspan="2">Qty.</th><th rowspan="2">Unit</th><th rowspan="2">Rate</th>' + (hasDisc ? '<th rowspan="2">Total</th><th rowspan="2">Discount</th>' : '') + '<th rowspan="2" class="wrap">Taxable Value</th>' + (c.type === "intra" ? '<th colspan="2">CGST</th><th colspan="2">SGST</th>' : '<th colspan="2">IGST</th>') + '<th rowspan="2" class="wrap">Total Amount</th></tr>' +
           '<tr>' + (c.type === "intra" ? "<th>Rate</th><th>Amount</th><th>Rate</th><th>Amount</th>" : "<th>Rate</th><th>Amount</th>") + '</tr></thead><tbody>';
         c.rows.forEach(function (r, i) {
           var intra = c.type === "intra";
           h += '<tr><td class="c">' + (i + 1) + '</td><td class="desc">' + esc(r.it.desc) + '</td><td class="c">' + esc(r.it.hsn) + '</td>' +
-            '<td class="c">' + esc(r.qty) + '</td><td class="c">' + esc(r.it.unit) + '</td><td class="n">' + money(r.rate) + '</td><td class="n">' + money(r.total) + '</td>' +
-            '<td class="n">' + (r.disc ? money(r.disc) : "") + '</td><td class="n">' + money(r.taxable) + '</td>' +
+            '<td class="c">' + esc(r.qty) + '</td><td class="c">' + esc(r.it.unit) + '</td><td class="n">' + money(r.rate) + '</td>' +
+            (hasDisc ? '<td class="n">' + money(r.total) + '</td><td class="n">' + (r.disc ? money(r.disc) : "") + '</td>' : '') + '<td class="n">' + money(r.taxable) + '</td>' +
             (intra ? '<td class="c">' + pct(r.cr) + '</td><td class="n">' + money(r.ca) + '</td><td class="c">' + pct(r.sr) + '</td><td class="n">' + money(r.sa) + '</td>'
               : '<td class="c">' + pct(r.ir) + '</td><td class="n">' + money(r.ia) + '</td>') +
             '<td class="n"><b>' + money(r.net) + '</b></td></tr>';
         });
-        var fillMm = Math.max(0, 8 - c.rows.length) * 9;
-        if (fillMm) { h += '<tr class="fill" style="height:' + fillMm + 'mm">' + new Array(c.type === "intra" ? 15 : 13).join("<td></td>") + '</tr>' }
-        h += '<tr style="font-weight:700;background:#f5f8ff"><td colspan="6" class="n" style="border-top:1px solid #333">Sub-total</td><td class="n" style="border-top:1px solid #333">' + money(c.sum.total) + '</td><td class="n" style="border-top:1px solid #333">' + (c.sum.disc ? money(c.sum.disc) : "") + '</td><td class="n" style="border-top:1px solid #333">' + money(c.sum.taxable) + '</td>' +
+        var fillMm = Math.max(0, 4 - c.rows.length) * 9;
+        if (fillMm) { h += '<tr class="fill" style="height:' + fillMm + 'mm">' + new Array((c.type === "intra" ? 13 : 11) + (hasDisc ? 2 : 0)).join("<td></td>") + '</tr>' }
+        h += '<tr style="font-weight:700;background:#f5f8ff"><td colspan="6" class="n" style="border-top:1px solid #333">Sub-total</td>' + (hasDisc ? '<td class="n" style="border-top:1px solid #333">' + money(c.sum.total) + '</td><td class="n" style="border-top:1px solid #333">' + money(c.sum.disc) + '</td>' : '') + '<td class="n" style="border-top:1px solid #333">' + money(c.sum.taxable) + '</td>' +
           (c.type === "intra" ? '<td style="border-top:1px solid #333"></td><td class="n" style="border-top:1px solid #333">' + money(c.sum.cgst) + '</td><td style="border-top:1px solid #333"></td><td class="n" style="border-top:1px solid #333">' + money(c.sum.sgst) + '</td>'
             : '<td style="border-top:1px solid #333"></td><td class="n" style="border-top:1px solid #333">' + money(c.sum.igst) + '</td>') + '<td class="n" style="border-top:1px solid #333">' + money(c.sum.net) + '</td></tr>';
         h += '</tbody></table>';
@@ -1240,10 +1250,10 @@
       function commitSheet(h, landscape) {
         var sh = $("#sheet");
         sh.innerHTML = h;
+        if (!landscape && tableTooWideForPortrait()) landscape = true;
         sh.classList.toggle("landscape", landscape);
         $("#pageRule").textContent = "@page{size:A4 " + (landscape ? "landscape" : "portrait") + ";margin:8mm}";
         sh.style.zoom = "";
-        fitTable();
         fitPreview();
       }
 
@@ -1265,13 +1275,13 @@
           (S.coGstin ? '<div>GSTIN: ' + esc(S.coGstin) + ((S.coState || S.coStateCode) ? ' &nbsp;|&nbsp; ' + esc(S.coState) + (S.coStateCode ? ' (Code: ' + esc(S.coStateCode) + ')' : '') : '') + '</div>' : '') +
           '<div class="q-lbl" style="margin-top:3mm">To :</div>' + who({ name: S.bName, addr: S.bAddress, state: S.bState, code: S.bStateCode, gstin: S.bGstin }) +
           '</div><div><table class="q-meta">' + meta + '</table>' +
-          (S.same ? '' : '<div class="q-lbl" style="margin-top:5mm">Ship To :</div>' + who(cons)) + '</div></div>';
+          '</div></div>';
         h += '<div class="q-by">Quotation prepared by : <span>' + esc(S.preparedBy) + '</span></div>';
         h += '<table class="qitems"><colgroup><col style="width:7%"><col style="width:43%"><col style="width:17%"><col style="width:15%"><col style="width:18%"></colgroup>' +
           '<thead><tr><th>S. No</th><th>Items</th><th>Unit Price</th><th>Quantity</th><th>Amount</th></tr></thead><tbody>';
         c.rows.forEach(function (r, i) {
           if (r.gst && rates.indexOf(r.gst) < 0) rates.push(r.gst);
-          h += '<tr><td class="c">' + (i + 1) + '</td><td>' + (r.it.name ? '<b>' + esc(r.it.name) + '</b>' : '') + (r.it.desc ? '<div class="q-pre">' + esc(r.it.desc) + '</div>' : '') + (r.it.hsn ? '<div class="q-hsn">HSN: ' + esc(r.it.hsn) + '</div>' : '') + '</td>' +
+          h += '<tr><td class="c">' + (i + 1) + '</td><td>' + (r.it.name ? '<b>' + esc(r.it.name) + '</b>' : '') + (r.it.hsn ? '<div class="q-hsn">HSN: ' + esc(r.it.hsn) + '</div>' : '') + '</td>' +
             '<td class="n">' + money(r.rate) + '</td><td class="c">' + esc(r.qty) + ' ' + esc(r.it.unit) + '</td><td class="n">' + money(r.total) + '</td></tr>';
         });
         var fillMm = Math.max(0, 5 - c.rows.length) * 8;
@@ -1297,14 +1307,16 @@
         return h;
       }
 
-      /* shrink the table font until every column fits the page width (descriptions wrap, numbers never overflow) */
-      function fitTable() {
-        var sh = $("#sheet"), t = $("table.items");
-        if (!t) return;
-        var cs = getComputedStyle(sh), avail = sh.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-        var fs = 9;
-        t.style.fontSize = fs + "pt";
-        while (fs > 4.5 && t.offsetWidth > avail + 0.5) { fs -= 0.25; t.style.fontSize = fs + "pt" }
+      /* The item table always uses large 11pt text (headings 8.5pt).
+         If its columns need more width than portrait A4 offers, the sheet switches to landscape instead of shrinking the text. */
+      function tableTooWideForPortrait() {
+        var t = $("table.items"); if (!t) return false;
+        var availPx = (210 - 16) * 96 / 25.4;
+        var box = document.createElement("div");
+        box.style.cssText = "position:absolute;left:-10000px;top:0;visibility:hidden;padding:0;width:" + availPx + "px";
+        var c = t.cloneNode(true); c.style.width = "1px"; c.style.fontSize = "11pt"; box.appendChild(c); document.body.appendChild(box);
+        var need = c.offsetWidth; document.body.removeChild(box);
+        return need > availPx + 2;
       }
 
       /* shrink the A4 sheet on narrow screens (screen only; print resets zoom) */
@@ -1324,8 +1336,8 @@
         S.items.forEach(function (it, i) {
           var d = document.createElement("div"); d.className = "item";
           d.innerHTML = '<div class="item-head"><span>Item ' + (i + 1) + '</span>' + (S.items.length > 1 ? '<button class="btn-small btn-danger" data-del="' + i + '">Remove</button>' : '') + '</div>' +
-            (S.docType === "quotation" ? '<div style="margin-bottom:8px"><label>Item (shown in ITEMS column)</label><input data-i="' + i + '" data-f="name" value="' + esc(it.name) + '"></div>' : '') +
-            '<div style="margin-bottom:8px"><label>' + (S.docType === "quotation" ? "Details (shown under the item name)" : "Description of goods") + '</label><textarea data-i="' + i + '" data-f="desc" rows="2">' + esc(it.desc) + '</textarea></div>' +
+            (S.docType === "quotation" ? '<div style="margin-bottom:8px"><label>Item name</label><input data-i="' + i + '" data-f="name" value="' + esc(it.name) + '"></div>' : '') +
+            (S.docType === "quotation" ? "" : '<div style="margin-bottom:8px"><label>Description of goods</label><textarea data-i="' + i + '" data-f="desc" rows="2">' + esc(it.desc) + '</textarea></div>') +
             '<div class="grid3">' +
             '<div><label>HSN Code</label><input data-i="' + i + '" data-f="hsn" value="' + esc(it.hsn) + '"></div>' +
             '<div><label>Qty.</label><input type="number" min="0" step="any" data-i="' + i + '" data-f="qty" value="' + esc(it.qty) + '"></div>' +
@@ -1479,7 +1491,7 @@
       /* --- form labels that depend on the document type --- */
       function applyDocType() {
         var q = S.docType === "quotation", cfg = cfgNow();
-        $("#prepWrap").style.display = q ? "" : "none"; $("#gstWrap").style.display = q ? "" : "none";
+        $("#prepWrap").style.display = q ? "" : "none"; $("#gstWrap").style.display = q ? "" : "none"; $("#consCard").style.display = q ? "none" : "";
         $("#lblNo").textContent = q ? "Quotation Number (auto)" : "Serial Number Invoice (auto)";
         $("#lblDue").textContent = q ? "Valid Until" : "Due Date";
         $("#lblStatus").textContent = q ? "Quotation Status" : "Payment Status";
